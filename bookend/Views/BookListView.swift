@@ -20,6 +20,7 @@ struct BookListView: View {
                             BookRow(book: book)
                                 .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                                     Button(role: .destructive) {
+                                        book.cleanupStoredImage()
                                         modelContext.delete(book)
                                     } label: {
                                         Label("Delete", systemImage: "trash")
@@ -50,7 +51,7 @@ struct BookListView: View {
             }
             .navigationTitle("My Books")
             .sheet(isPresented: $showingAddBook) {
-                AddBookView()
+                BookAddView()
             }
         }
     }
@@ -62,6 +63,20 @@ struct BookRow: View {
     var body: some View {
         NavigationLink(destination: BookView(book: book, currentPage: book.currentPage)) {
             HStack {
+                if let image = try? book.loadCoverImage() {
+                    Image(uiImage: image)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: 50, height: 70)
+                        .cornerRadius(4)
+                } else {
+                    Image(systemName: "book.fill")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 50, height: 70)
+                        .foregroundColor(.gray)
+                }
+                
                 VStack(alignment: .leading) {
                     Text(book.title)
                         .font(.headline)

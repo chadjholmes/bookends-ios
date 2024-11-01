@@ -13,87 +13,11 @@ struct BookView: View {
         self._currentPage = State(initialValue: currentPage)
     }
     
-    public var body: some View {
+    var body: some View {
         ScrollView {
             VStack(spacing: 20) {
-                // Cover Image Section
-                if let coverUrl = book.coverImage,
-                   let url = URL(string: coverUrl) {
-                    AsyncImage(url: url) { phase in
-                        switch phase {
-                        case .success(let image):
-                            image
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .frame(height: 250)
-                                .cornerRadius(8)
-                                .shadow(radius: 5)
-                        case .failure(_):
-                            Image(systemName: "book.fill")
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .frame(height: 250)
-                                .foregroundColor(.gray)
-                        case .empty:
-                            ProgressView()
-                                .frame(height: 250)
-                        @unknown default:
-                            EmptyView()
-                        }
-                    }
-                    .padding(.horizontal)
-                } else {
-                    Image(systemName: "book.fill")
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(height: 250)
-                        .foregroundColor(.gray)
-                        .padding(.horizontal)
-                }
-                
-                // Book details
-                VStack(alignment: .leading, spacing: 12) {
-                    Text(book.title)
-                        .font(.title)
-                        .bold()
-                    
-                    if !book.author.isEmpty {
-                        Text("by \(book.author)")
-                            .font(.title2)
-                            .foregroundColor(.secondary)
-                    }
-                    
-                    // Reading progress
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Reading Progress")
-                            .font(.headline)
-                        
-                        HStack {
-                            Text("\(currentPage) of \(book.totalPages) pages")
-                            Spacer()
-                            Text("\(Int((Double(currentPage) / Double(book.totalPages)) * 100))%")
-                        }
-                        .font(.subheadline)
-                        
-                        ProgressView(value: Double(currentPage), total: Double(book.totalPages))
-                            .tint(.blue)
-                        
-                        // Page update stepper
-                        Stepper("Current Page: \(currentPage)", value: $currentPage, in: 0...book.totalPages)
-                            .onChange(of: currentPage) { oldValue, newValue in
-                                book.currentPage = newValue
-                                try? modelContext.save()
-                            }
-                    }
-                    .padding(.top)
-                    
-                    // Added date
-                    Text("Added on \(book.createdAt.formatted(date: .abbreviated, time: .omitted))")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .padding(.top)
-                }
-                .padding()
+                BookCoverView(book: book)
+                BookDetailsView(book: book, currentPage: $currentPage, modelContext: modelContext)
             }
         }
         .navigationBarTitleDisplayMode(.inline)
@@ -106,7 +30,121 @@ struct BookView: View {
         }
         .sheet(isPresented: $isEditing) {
             NavigationView {
-                EditBookView(book: book)
+                BookEditView(book: book)
+            }
+        }
+    }
+}
+
+// Cover Image Component
+struct BookCoverView: View {
+    let book: Book
+    
+    var body: some View {
+        Group {
+            if let image = try? book.loadCoverImage() {
+                Image(uiImage: image)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(height: 250)
+                    .cornerRadius(8)
+                    .shadow(radius: 5)
+            } else {
+                Image(systemName: "book.fill")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(height: 250)
+                    .foregroundColor(.gray)
+            }
+        }
+        .padding(.horizontal)
+    }
+}
+
+// Book Details Component
+struct BookDetailsView: View {
+    let book: Book
+    @Binding var currentPage: Int
+    let modelContext: ModelContext
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(book.title)
+                .font(.title)
+                .bold()
+            
+            if !book.author.isEmpty {
+                Text("by \(book.author)")
+                    .font(.title2)
+                    .foregroundColor(.secondary)
+            }
+            
+            ReadingProgressView(book: book, currentPage: $currentPage, modelContext: modelContext)
+            
+            BookMetadataView(book: book)
+        }
+        .padding()
+    }
+}
+
+// Reading Progress Component
+struct ReadingProgressView: View {
+    let book: Book
+    @Binding var currentPage: Int
+    let modelContext: ModelContext
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Reading Progress")
+                .font(.headline)
+            
+            HStack {
+                Text("\(currentPage) of \(book.totalPages) pages")
+                Spacer()
+                Text("\(Int((Double(currentPage) / Double(book.totalPages)) * 100))%")
+            }
+            .font(.subheadline)
+            
+            ProgressView(value: Double(currentPage), total: Double(book.totalPages))
+                .tint(.blue)
+            
+            Stepper("Current Page: \(currentPage)", value: $currentPage, in: 0...book.totalPages)
+                .onChange(of: currentPage) { oldValue, newValue in
+                    book.currentPage = newValue
+                    try? modelContext.save()
+                }
+        }
+        .padding(.top)
+    }
+}
+
+// Book Metadata Component
+struct BookMetadataView: View {
+    let book: Book
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Added on \(book.createdAt.formatted(date: .abbreviated, time: .omitted))")
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .padding(.top)
+
+            if let publisher = book.publisher {
+                Text("Publisher: \(publisher)")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+            }
+
+            if let publishYear = book.publishYear {
+                Text("Published: \(publishYear)")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+            }
+
+            if let isbn = book.isbn {
+                Text("ISBN: \(isbn)")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
             }
         }
     }
@@ -120,13 +158,12 @@ struct BookView: View {
     let book = Book(
         title: "Sample Book",
         author: "John Doe",
-        coverImage: "https://covers.openlibrary.org/b/id/12547191-L.jpg", // Sample cover URL
         genre: "Fiction",
         notes: "This is a sample note about the book.",
         totalPages: 100
     )
     
-    return NavigationView {
+    NavigationView {
         BookView(book: book, currentPage: book.currentPage)
     }
     .modelContainer(container)
