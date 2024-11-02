@@ -81,7 +81,7 @@ struct BookListView: View {
                     }
                 }
             }
-            .navigationTitle("📚 Bookend")
+            .navigationTitle("📚 Bookends")
             .sheet(isPresented: $showingAddBook) {
                 BookAddView()
             }
