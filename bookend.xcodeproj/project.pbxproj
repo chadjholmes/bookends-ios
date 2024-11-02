@@ -642,10 +642,6 @@
 					ProjectRef = EBFFDDA82CD5557500DBCF88 /* Bookend.xcodeproj */;
 				},
 				{
-					ProductGroup = EB242AFD2CD54D8B0027FD0E /* Products */;
-					ProjectRef = EB242AF82CD54D8A0027FD0E /* Bookend.xcodeproj */;
-				},
-				{
 					ProductGroup = EB4AC11B2CD54F7F00DB4F9D /* Products */;
 					ProjectRef = EB4AC1062CD54F7E00DB4F9D /* bookend.xcodeproj */;
 				},
@@ -656,6 +652,10 @@
 				{
 					ProductGroup = EB4AC1272CD54F7F00DB4F9D /* Products */;
 					ProjectRef = EB4AEE992CD54F7E00DB4F9D /* Bookend.xcodeproj */;
+				},
+				{
+					ProductGroup = EB242AFD2CD54D8B0027FD0E /* Products */;
+					ProjectRef = EB242AF82CD54D8A0027FD0E /* Bookend.xcodeproj */;
 				},
 				{
 					ProductGroup = EBFFB0342CD5557600DBCF88 /* Products */;
@@ -674,6 +674,10 @@
 					ProjectRef = EB4AB4482CD54F7E00DB4F9D /* libffi.xcodeproj */;
 				},
 				{
+					ProductGroup = EBFFB0242CD5557600DBCF88 /* Products */;
+					ProjectRef = EBFFDDA42CD5557500DBCF88 /* Pods.xcodeproj */;
+				},
+				{
 					ProductGroup = EB4AC1192CD54F7F00DB4F9D /* Products */;
 					ProjectRef = EB4AEE952CD54F7E00DB4F9D /* Pods.xcodeproj */;
 				},
@@ -682,28 +686,16 @@
 					ProjectRef = EB242AF42CD54D8A0027FD0E /* Pods.xcodeproj */;
 				},
 				{
-					ProductGroup = EBFFB0242CD5557600DBCF88 /* Products */;
-					ProjectRef = EBFFDDA42CD5557500DBCF88 /* Pods.xcodeproj */;
-				},
-				{
 					ProductGroup = EBFFB0202CD5557500DBCF88 /* Products */;
 					ProjectRef = EBFFF4E22CD5557500DBCF88 /* RNCMaskedView.xcodeproj */;
-				},
-				{
-					ProductGroup = EB2453E02CD54D910027FD0E /* Products */;
-					ProjectRef = EB2453D12CD54D900027FD0E /* RNCMaskedView.xcodeproj */;
 				},
 				{
 					ProductGroup = EB4AC10B2CD54F7E00DB4F9D /* Products */;
 					ProjectRef = EB4A05D32CD54F7E00DB4F9D /* RNCMaskedView.xcodeproj */;
 				},
 				{
-					ProductGroup = EB4AC1152CD54F7F00DB4F9D /* Products */;
-					ProjectRef = EB4A06A72CD54F7E00DB4F9D /* RNCPicker.xcodeproj */;
-				},
-				{
-					ProductGroup = EB24373D2CD54D650027FD0E /* Products */;
-					ProjectRef = EB2422AA2CD54D650027FD0E /* RNCPicker.xcodeproj */;
+					ProductGroup = EB2453E02CD54D910027FD0E /* Products */;
+					ProjectRef = EB2453D12CD54D900027FD0E /* RNCMaskedView.xcodeproj */;
 				},
 				{
 					ProductGroup = EB4AC11F2CD54F7F00DB4F9D /* Products */;
@@ -712,6 +704,14 @@
 				{
 					ProductGroup = EBFFB0302CD5557600DBCF88 /* Products */;
 					ProjectRef = EBFFF5952CD5557500DBCF88 /* RNCPicker.xcodeproj */;
+				},
+				{
+					ProductGroup = EB4AC1152CD54F7F00DB4F9D /* Products */;
+					ProjectRef = EB4A06A72CD54F7E00DB4F9D /* RNCPicker.xcodeproj */;
+				},
+				{
+					ProductGroup = EB24373D2CD54D650027FD0E /* Products */;
+					ProjectRef = EB2422AA2CD54D650027FD0E /* RNCPicker.xcodeproj */;
 				},
 				{
 					ProductGroup = EBFFB0182CD5557500DBCF88 /* Products */;
@@ -750,12 +750,12 @@
 					ProjectRef = EB240DD92CD54D600027FD0E /* RNImagePicker.xcodeproj */;
 				},
 				{
-					ProductGroup = EB4AC1112CD54F7E00DB4F9D /* Products */;
-					ProjectRef = EB4A81E52CD54F7E00DB4F9D /* RNImagePicker.xcodeproj */;
-				},
-				{
 					ProductGroup = EBFFB0362CD5557600DBCF88 /* Products */;
 					ProjectRef = EBFF70F42CD5557500DBCF88 /* RNImagePicker.xcodeproj */;
+				},
+				{
+					ProductGroup = EB4AC1112CD54F7E00DB4F9D /* Products */;
+					ProjectRef = EB4A81E52CD54F7E00DB4F9D /* RNImagePicker.xcodeproj */;
 				},
 				{
 					ProductGroup = EB4AC1172CD54F7F00DB4F9D /* Products */;
@@ -774,12 +774,16 @@
 					ProjectRef = EBFF7C642CD5557500DBCF88 /* RNSafeAreaContext.xcodeproj */;
 				},
 				{
+					ProductGroup = EB4AC10D2CD54F7E00DB4F9D /* Products */;
+					ProjectRef = EB4A8D552CD54F7E00DB4F9D /* RNSafeAreaContext.xcodeproj */;
+				},
+				{
 					ProductGroup = EB248E382CD54DD40027FD0E /* Products */;
 					ProjectRef = EB248AD22CD54DD40027FD0E /* RNSafeAreaContext.xcodeproj */;
 				},
 				{
-					ProductGroup = EB4AC10D2CD54F7E00DB4F9D /* Products */;
-					ProjectRef = EB4A8D552CD54F7E00DB4F9D /* RNSafeAreaContext.xcodeproj */;
+					ProductGroup = EB4AC11D2CD54F7F00DB4F9D /* Products */;
+					ProjectRef = EB4A8E942CD54F7E00DB4F9D /* RNScreens.xcodeproj */;
 				},
 				{
 					ProductGroup = EB248E362CD54DD40027FD0E /* Products */;
@@ -788,10 +792,6 @@
 				{
 					ProductGroup = EBFFB01E2CD5557500DBCF88 /* Products */;
 					ProjectRef = EBFF7DA32CD5557500DBCF88 /* RNScreens.xcodeproj */;
-				},
-				{
-					ProductGroup = EB4AC11D2CD54F7F00DB4F9D /* Products */;
-					ProjectRef = EB4A8E942CD54F7E00DB4F9D /* RNScreens.xcodeproj */;
 				},
 				{
 					ProductGroup = EB24373F2CD54D650027FD0E /* Products */;
@@ -818,16 +818,16 @@
 					ProjectRef = EB4A93C12CD54F7E00DB4F9D /* RNSVG.xcodeproj */;
 				},
 				{
-					ProductGroup = EB4AC1232CD54F7F00DB4F9D /* Products */;
-					ProjectRef = EB4A99772CD54F7E00DB4F9D /* RNVectorIcons.xcodeproj */;
-				},
-				{
 					ProductGroup = EB24971F2CD54DD50027FD0E /* Products */;
 					ProjectRef = EB2496F52CD54DD50027FD0E /* RNVectorIcons.xcodeproj */;
 				},
 				{
 					ProductGroup = EBFFB02C2CD5557600DBCF88 /* Products */;
 					ProjectRef = EBFF88862CD5557500DBCF88 /* RNVectorIcons.xcodeproj */;
+				},
+				{
+					ProductGroup = EB4AC1232CD54F7F00DB4F9D /* Products */;
+					ProjectRef = EB4A99772CD54F7E00DB4F9D /* RNVectorIcons.xcodeproj */;
 				},
 				{
 					ProductGroup = EBFFB0262CD5557600DBCF88 /* Products */;

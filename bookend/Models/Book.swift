@@ -1,5 +1,5 @@
 //
-//  book.swift
+//  Book.swift
 //  bookend
 //
 //  Created by Chad Holmes on 11/1/24.
@@ -11,7 +11,7 @@ import SwiftData
 
 @Model
 public final class Book {
-    public var id: String
+    @Attribute(.unique) public var id: UUID
     public var title: String
     public var author: String
     public var genre: String?
@@ -19,26 +19,28 @@ public final class Book {
     public var currentPage: Int
     public var totalPages: Int
     public var createdAt: Date
-    public var isbn: String?
+    public var isbn: String?               // Ensure this property is included
     public var publisher: String?
     public var publishYear: Int?
     
-    // Make these properties accessible to the extension
-    @Attribute(.externalStorage) public var coverImageData: Data?
+    // External references to maintain OpenLibrary identifiers
+    public var externalReference: [String: String]  // Ensure this property is included
+    
+    @Attribute(.externalStorage) public var coverImageData: Data?  // Ensure this property is included
     @Attribute(.externalStorage) public var coverImageURL: URL?
     
-    public init(id: String = UUID().uuidString,
-         title: String,
-         author: String,
-         genre: String? = nil,
-         notes: String? = nil,
-         totalPages: Int,
-         isbn: String? = nil,
-         publisher: String? = nil,
-         publishYear: Int? = nil,
-         currentPage: Int = 0,
-         createdAt: Date = Date()
-    ) {
+    public init(id: UUID = UUID(),
+                title: String,
+                author: String,
+                genre: String? = nil,
+                notes: String? = nil,
+                totalPages: Int,
+                isbn: String? = nil,
+                publisher: String? = nil,
+                publishYear: Int? = nil,
+                currentPage: Int = 0,
+                createdAt: Date = Date(),
+                externalReference: [String: String]) {
         self.id = id
         self.title = title
         self.author = author
@@ -50,7 +52,35 @@ public final class Book {
         self.publishYear = publishYear
         self.currentPage = currentPage
         self.createdAt = createdAt
+        self.externalReference = externalReference
         self.coverImageData = nil
         self.coverImageURL = nil
+    }
+    
+    /// Loads the cover image from stored data or URL.
+    public func loadCoverImage() throws -> UIImage {
+        if let imageData = coverImageData {
+            guard let image = UIImage(data: imageData) else {
+                throw NSError(domain: "Invalid image data", code: 0, userInfo: nil)
+            }
+            return image
+        } else if let imageUrl = coverImageURL,
+                  let data = try? Data(contentsOf: imageUrl),
+                  let image = UIImage(data: data) {
+            return image
+        } else {
+            throw NSError(domain: "No cover image available", code: 0, userInfo: nil)
+        }
+    }
+    
+    /// Saves the cover image to storage.
+    /// - Parameter image: The UIImage to save.
+    public func saveCoverImage(_ image: UIImage) throws {
+        if let data = image.jpegData(compressionQuality: 0.8) {
+            self.coverImageData = data
+            self.coverImageURL = nil // Clear URL if saving data directly
+        } else {
+            throw NSError(domain: "Failed to convert image to data", code: 0, userInfo: nil)
+        }
     }
 } 

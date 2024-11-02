@@ -110,7 +110,8 @@ struct BookAddView: View {
             publisher: selectedEdition?.publisher?.first,
             publishYear: selectedEdition?.first_publish_year,
             currentPage: 0,
-            createdAt: Date()
+            createdAt: Date(),
+            externalReference: ["openlibraryKey": selectedEdition?.key ?? ""]
         )
         
         // Handle the image separately after creation

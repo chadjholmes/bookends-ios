@@ -7,7 +7,7 @@ struct BookView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var isEditing = false
     @State private var currentPage: Int
-
+    
     public init(book: Book, currentPage: Int) {
         self.book = book
         self._currentPage = State(initialValue: currentPage)
@@ -32,6 +32,7 @@ struct BookView: View {
             NavigationView {
                 BookEditView(book: book)
             }
+            .interactiveDismissDisabled() // Prevent dismissal without saving
         }
     }
 }
@@ -43,6 +44,16 @@ struct BookCoverView: View {
     var body: some View {
         Group {
             if let image = try? book.loadCoverImage() {
+                Image(uiImage: image)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(height: 250)
+                    .cornerRadius(8)
+                    .shadow(radius: 5)
+            } else if let coverUrl = book.coverImageURL,
+                      let url = URL(string: coverUrl.absoluteString),
+                      let data = try? Data(contentsOf: url),
+                      let image = UIImage(data: data) {
                 Image(uiImage: image)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
@@ -101,7 +112,7 @@ struct ReadingProgressView: View {
             HStack {
                 Text("\(currentPage) of \(book.totalPages) pages")
                 Spacer()
-                Text("\(Int((Double(currentPage) / Double(book.totalPages)) * 100))%")
+                Text("\(calculateProgress())%")
             }
             .font(.subheadline)
             
@@ -111,10 +122,20 @@ struct ReadingProgressView: View {
             Stepper("Current Page: \(currentPage)", value: $currentPage, in: 0...book.totalPages)
                 .onChange(of: currentPage) { oldValue, newValue in
                     book.currentPage = newValue
-                    try? modelContext.save()
+                    do {
+                        try modelContext.save()
+                    } catch {
+                        print("Failed to save current page: \(error.localizedDescription)")
+                    }
                 }
         }
         .padding(.top)
+    }
+
+    private func calculateProgress() -> String {
+        guard book.totalPages > 0 else { return "0" }
+        let progress = (Double(currentPage) / Double(book.totalPages)) * 100
+        return String(format: "%.0f", progress)
     }
 }
 
@@ -128,19 +149,19 @@ struct BookMetadataView: View {
                 .font(.caption)
                 .foregroundColor(.secondary)
                 .padding(.top)
-
+        
             if let publisher = book.publisher {
                 Text("Publisher: \(publisher)")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
             }
-
+        
             if let publishYear = book.publishYear {
                 Text("Published: \(publishYear)")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
             }
-
+        
             if let isbn = book.isbn {
                 Text("ISBN: \(isbn)")
                     .font(.caption)
@@ -151,20 +172,26 @@ struct BookMetadataView: View {
 }
 
 // Preview provider
-#Preview {
-    let config = ModelConfiguration(isStoredInMemoryOnly: true)
-    let container = try! ModelContainer(for: Book.self, configurations: config)
-    
-    let book = Book(
-        title: "Sample Book",
-        author: "John Doe",
-        genre: "Fiction",
-        notes: "This is a sample note about the book.",
-        totalPages: 100
-    )
-    
-    NavigationView {
-        BookView(book: book, currentPage: book.currentPage)
+struct BookView_Previews: PreviewProvider {
+    static var previews: some View {
+        let config = ModelConfiguration(isStoredInMemoryOnly: true)
+        let container = try! ModelContainer(for: Book.self, configurations: config)
+        
+        let book = Book(
+            title: "Sample Book",
+            author: "John Doe",
+            genre: "Fiction",
+            notes: "This is a sample note about the book.",
+            totalPages: 300,
+            isbn: "1234567890",
+            publisher: "Sample Publisher",
+            publishYear: 2023,
+            externalReference: ["openlibraryKey": "OL1234567890"]
+        )
+        
+        NavigationView {
+            BookView(book: book, currentPage: 50)
+        }
+        .modelContainer(container)
     }
-    .modelContainer(container)
 }

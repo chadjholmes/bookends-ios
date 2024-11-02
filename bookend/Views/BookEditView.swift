@@ -1,149 +1,126 @@
 import SwiftUI
-import SwiftData
 
 struct BookEditView: View {
     @Environment(\.dismiss) private var dismiss
-    let book: Book
-    
-    @State private var title: String
-    @State private var author: String
-    @State private var totalPages: String
-    @State private var selectedImage: UIImage?
-    
-    @State private var showingSearch = false
-    @State private var searchQuery = ""
-    @State private var searchResults: [OpenLibraryBook] = []
-    @State private var isSearching = false
-    @State private var selectedEdition: OpenLibraryBook?
-    
-    init(book: Book) {
-        self.book = book
-        _title = State(initialValue: book.title)
-        _author = State(initialValue: book.author)
-        _totalPages = State(initialValue: String(book.totalPages))
-        
-        if let isbn = book.isbn,
-           let publisher = book.publisher,
-           let publishYear = book.publishYear {
-            _selectedEdition = State(initialValue: OpenLibraryBook(
-                key: "",
-                title: book.title,
-                author_name: [book.author],
-                number_of_pages_median: book.totalPages,
-                cover_i: nil,
-                first_publish_year: publishYear,
-                publisher: [publisher],
-                isbn: [isbn]
-            ))
-        }
+    @Environment(\.modelContext) private var modelContext
+    @StateObject private var viewModel: BookEditViewModel
+    @State private var showEditionsView = false
+
+    init(book: Book? = nil) {
+        _viewModel = StateObject(wrappedValue: BookEditViewModel(book: book))
     }
-    
+
     var body: some View {
-        Form {
-            Section("Cover Image") {
-                if let image = try? book.loadCoverImage() {
-                    Image(uiImage: image)
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(height: 200)
-                }
-            }
-            
-            if let selectedEdition = selectedEdition {
-                Section(header: Text("Current Edition")) {
-                    VStack(alignment: .leading) {
-                        Text("Publisher: \(selectedEdition.publisher?.first ?? "Unknown")")
-                        if let year = selectedEdition.first_publish_year {
-                            Text("Published: \(year)")
-                        }
-                        if let pages = selectedEdition.number_of_pages_median {
-                            Text("Pages: \(pages)")
-                        }
-                        if let isbn = selectedEdition.isbn?.first {
-                            Text("ISBN: \(isbn)")
-                        }
-                    }
+        NavigationStack {
+            Form {
+                // Cover Image Section
+                Section(header: Text("Cover Image")) {
+                    CoverImageView(
+                        coverImageData: viewModel.selectedImage?.pngData(),
+                        coverImageURL: viewModel.selectedEdition?.coverImageUrl ?? viewModel.selectedBook?.coverImageUrl,
+                        selectedImage: $viewModel.selectedImage
+                    )
                     
                     Button("Change Edition") {
-                        showingSearch = true
+                        showEditionsView = true
                     }
                 }
-            } else {
-                Section {
-                    Button("Select Edition") {
-                        showingSearch = true
+                
+                // Book Details Section
+                Section(header: Text("Book Details")) {
+                    TextField("Title", text: $viewModel.title)
+                        .disableAutocorrection(true)
+                    
+                    TextField("Author", text: $viewModel.author)
+                        .disableAutocorrection(true)
+                    
+                    if viewModel.selectedEdition == nil {
+                        TextField("Total Pages", text: $viewModel.totalPages)
+                            .keyboardType(.numberPad)
                     }
                 }
             }
-            
-            Section("Book Details") {
-                TextField("Title", text: $title)
-                TextField("Author", text: $author)
-                if selectedEdition == nil {
-                    TextField("Total Pages", text: $totalPages)
-                        .keyboardType(.numberPad)
-                }
-            }
-        }
-        .navigationTitle("Edit Book")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button("Cancel") {
-                    dismiss()
-                }
-            }
-            ToolbarItem(placement: .confirmationAction) {
-                Button("Save") {
-                    updateBook()
-                    dismiss()
-                }
-            }
-        }
-        .sheet(isPresented: $showingSearch) {
-            BookSearchView(
-                searchQuery: $searchQuery,
-                searchResults: $searchResults,
-                isSearching: $isSearching,
-                onBookSelected: { newEdition in
-                    selectedEdition = newEdition
-                    title = newEdition.title
-                    author = newEdition.authorDisplay
-                    if let pages = newEdition.number_of_pages_median {
-                        totalPages = String(pages)
+            .navigationTitle(viewModel.book == nil ? "Add Book" : "Edit Book")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        dismiss()
                     }
-                    if let coverUrl = newEdition.coverImageUrl {
-                        Task {
-                            if let url = URL(string: coverUrl),
-                               let (data, _) = try? await URLSession.shared.data(from: url),
-                               let image = UIImage(data: data) {
-                                await MainActor.run {
-                                    selectedImage = image
-                                }
-                            }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        saveBook()
+                    }
+                    .disabled(!canSave)
+                }
+            }
+            .alert(isPresented: $viewModel.showAlert) {
+                Alert(
+                    title: Text("Error"),
+                    message: Text(viewModel.alertMessage),
+                    dismissButton: .default(Text("OK"))
+                )
+            }
+            .navigationDestination(isPresented: $showEditionsView) {
+                if let selectedBook = viewModel.selectedBook {
+                    BookEditionsView(
+                        selectedBook: selectedBook,
+                        onEditionSelected: { edition in
+                            viewModel.selectedEdition = edition
+                            viewModel.title = edition.title.isEmpty ? selectedBook.title : edition.title
+                            viewModel.totalPages = edition.number_of_pages != nil ? String(edition.number_of_pages!) : ""
+                            viewModel.selectedImage = nil // Reset the image before loading a new one
+                            viewModel.loadCoverImage(from: edition.coverImageUrl)
+                            // Update other properties as needed
+                            showEditionsView = false // Dismiss the view
                         }
-                    }
-                    showingSearch = false
+                    )
                 }
-            )
+            }
         }
     }
-    
-    private func updateBook() {
-        book.title = title.isEmpty ? "Untitled" : title
-        book.author = author.isEmpty ? "" : author
-        
-        if let edition = selectedEdition {
-            book.totalPages = edition.number_of_pages_median ?? Int(totalPages) ?? book.totalPages
-            book.isbn = edition.isbn?.first
-            book.publisher = edition.publisher?.first
-            book.publishYear = edition.first_publish_year
+
+    private var canSave: Bool {
+        !viewModel.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+        !viewModel.author.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+        (!selectedEditionInfoRequired || !viewModel.totalPages.isEmpty)
+    }
+
+    private var selectedEditionInfoRequired: Bool {
+        return viewModel.selectedEdition == nil
+    }
+
+    private func saveBook() {
+        // Check if we are editing an existing book or creating a new one
+        if let book = viewModel.book {
+            // Update the existing book
+            book.title = viewModel.title
+            book.author = viewModel.author
+            book.totalPages = Int(viewModel.totalPages) ?? 0
+            book.coverImageData = viewModel.selectedImage?.pngData() ?? book.coverImageData
+            // Update other properties as needed
         } else {
-            book.totalPages = Int(totalPages) ?? book.totalPages
+            // Create a new book
+            let newBook = Book(
+                title: viewModel.title,
+                author: viewModel.author,
+                totalPages: Int(viewModel.totalPages) ?? 0,
+                externalReference: [:] // Provide an empty dictionary or appropriate data
+                // Initialize other properties as needed
+            )
+            modelContext.insert(newBook)
         }
         
-        if let newImage = selectedImage {
-            try? book.saveCoverImage(newImage)
+        // Save the context
+        do {
+            try modelContext.save()
+            // After saving, dismiss the view to return to the book list
+            dismiss()
+        } catch {
+            // Handle the error, e.g., show an alert
+            viewModel.alertMessage = "Failed to save the book. Please try again."
+            viewModel.showAlert = true
         }
     }
-} 
+}

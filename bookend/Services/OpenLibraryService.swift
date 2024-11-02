@@ -31,6 +31,17 @@ struct OpenLibraryBook: Codable, Identifiable {
         }
         return nil
     }
+    
+    var completenessScore: Int {
+        var score = 0
+        if author_name != nil { score += 1 }
+        if number_of_pages_median != nil { score += 1 }
+        if cover_i != nil { score += 1 }
+        if first_publish_year != nil { score += 1 }
+        if publisher?.isEmpty == false { score += 1 }
+        if isbn?.isEmpty == false { score += 1 }
+        return score
+    }
 }
 
 class OpenLibraryService {
@@ -40,12 +51,82 @@ class OpenLibraryService {
     private init() {}
     
     func searchBooks(query: String) async throws -> [OpenLibraryBook] {
-        let encodedQuery = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? query
-        let url = URL(string: "\(baseURL)/search.json?q=\(encodedQuery)")!
+        let searchQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        let encodedQuery = searchQuery.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? searchQuery
         
-        let (data, _) = try await URLSession.shared.data(from: url)
-        let response = try JSONDecoder().decode(OpenLibraryResponse.self, from: data)
-        return response.docs
+        // Changed URL to use q parameter instead of title for broader search
+        // Added limit parameter to get more results
+        // Added mode=everything to search across all fields
+        let url = URL(string: "\(baseURL)/search.json?q=\(encodedQuery)&fields=key,title,author_name,number_of_pages_median,cover_i,first_publish_year,publisher,isbn&mode=everything&limit=50")!
+        
+        // Log the outbound request URL
+        print("Request URL: \(url.absoluteString)")
+
+        let (data, response) = try await URLSession.shared.data(from: url)
+
+        // Log the response data
+        if let httpResponse = response as? HTTPURLResponse {
+            print("Response Status Code: \(httpResponse.statusCode)")
+        }
+        print("Response Data: \(String(data: data, encoding: .utf8) ?? "Unable to decode response")")
+        
+        let decodedResponse = try JSONDecoder().decode(OpenLibraryResponse.self, from: data)
+        
+        // Improved sorting algorithm
+        return decodedResponse.docs.sorted { book1, book2 in
+            // First priority: Title contains exact query (case-insensitive)
+            let queryLower = searchQuery.lowercased()
+            let title1Contains = book1.title.lowercased().contains(queryLower)
+            let title2Contains = book2.title.lowercased().contains(queryLower)
+            
+            if title1Contains && !title2Contains { return true }
+            if title2Contains && !title1Contains { return false }
+            
+            // Second priority: Title starts with query
+            let title1Starts = book1.title.lowercased().starts(with: queryLower)
+            let title2Starts = book2.title.lowercased().starts(with: queryLower)
+            
+            if title1Starts && !title2Starts { return true }
+            if title2Starts && !title1Starts { return false }
+            
+            // Third priority: Completeness score
+            if book1.completenessScore != book2.completenessScore {
+                return book1.completenessScore > book2.completenessScore
+            }
+            
+            // Final priority: Alphabetical order
+            return book1.title < book2.title
+        }
+    }
+
+    /// Fetches detailed information about a book using its key.
+    /// - Parameter key: The OpenLibrary key for the book (e.g., "/works/OL12345W").
+    /// - Returns: An `OpenLibraryBook` with detailed information.
+    func fetchBookDetails(key: String) async throws -> OpenLibraryBook {
+        // Clean the key
+        let cleanKey = key
+            .replacingOccurrences(of: "/works/", with: "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        let url = URL(string: "\(baseURL)/works/\(cleanKey).json")!
+        
+        // Log the outbound request URL
+        print("Fetching Book Details from URL: \(url.absoluteString)")
+        
+        let (data, response) = try await URLSession.shared.data(from: url)
+        
+        // Log the response
+        if let httpResponse = response as? HTTPURLResponse {
+            print("Response Status Code: \(httpResponse.statusCode)")
+        }
+        print("Response Data: \(String(data: data, encoding: .utf8) ?? "Unable to decode response")")
+        
+        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+            throw OpenLibraryError.invalidResponse
+        }
+        
+        let decodedBook = try JSONDecoder().decode(OpenLibraryBook.self, from: data)
+        return decodedBook
     }
     
     func getEditions(workId: String) async throws -> [OpenLibraryEdition] {
@@ -53,10 +134,13 @@ class OpenLibraryService {
             throw OpenLibraryError.invalidWorkId
         }
         
-        // Clean the workId to remove any potential /works/ prefix
-        let cleanWorkId = workId.replacingOccurrences(of: "/works/", with: "")
-                               .replacingOccurrences(of: "works/", with: "")
-                               .trimmingCharacters(in: .whitespacesAndNewlines)
+        // Adjust the cleaning process to handle different potential prefixes
+        let cleanWorkId = workId
+            .replacingOccurrences(of: "/works/", with: "")
+            .replacingOccurrences(of: "works/", with: "")
+            .replacingOccurrences(of: "/books/", with: "")
+            .replacingOccurrences(of: "books/", with: "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
         
         let urlString = "\(baseURL)/works/\(cleanWorkId)/editions.json"
         print("Cleaned URL: \(urlString)")  // Debug log
@@ -65,7 +149,16 @@ class OpenLibraryService {
             throw OpenLibraryError.invalidURL
         }
         
+        // Log the outbound request URL
+        print("Request URL: \(url.absoluteString)")
+
         let (data, response) = try await URLSession.shared.data(from: url)
+
+        // Log the response data
+        if let httpResponse = response as? HTTPURLResponse {
+            print("Response Status Code: \(httpResponse.statusCode)")
+        }
+        print("Response Data: \(String(data: data, encoding: .utf8) ?? "Unable to decode response")")
         
         guard let httpResponse = response as? HTTPURLResponse else {
             throw OpenLibraryError.invalidResponse
@@ -79,8 +172,8 @@ class OpenLibraryService {
         print("Raw response: \(String(data: data, encoding: .utf8) ?? "Unable to decode response")")
         
         do {
-            let response = try JSONDecoder().decode(OpenLibraryEditionsResponse.self, from: data)
-            return response.entries
+            let decodedResponse = try JSONDecoder().decode(OpenLibraryEditionsResponse.self, from: data)
+            return decodedResponse.entries
         } catch {
             print("Decoding error: \(error)")  // Debug log
             throw OpenLibraryError.decodingError(underlying: error)
@@ -140,4 +233,4 @@ enum OpenLibraryError: LocalizedError {
             return "Failed to parse response: \(error.localizedDescription)"
         }
     }
-} 
+}
