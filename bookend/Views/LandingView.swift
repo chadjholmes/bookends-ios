@@ -18,6 +18,13 @@ struct LandingView: View {
                     Text("Dashboard")
                 }
                 .tag(1)
+                
+            GoalsView()
+                .tabItem {
+                    Image(systemName: "target")
+                    Text("Goals")
+                }
+                .tag(2)
         }
     }
 }

@@ -7,6 +7,7 @@ struct BookView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var isEditing = false
     @State private var currentPage: Int
+    @State private var showingReadingSession = false
     
     public init(book: Book, currentPage: Int) {
         self.book = book
@@ -18,6 +19,18 @@ struct BookView: View {
             VStack(spacing: 20) {
                 BookCoverView(book: book)
                 BookDetailsView(book: book, currentPage: $currentPage, modelContext: modelContext)
+                
+                Button(action: {
+                    showingReadingSession = true
+                }) {
+                    Label("Add Reading Session", systemImage: "book.closed")
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(10)
+                }
+                .padding(.horizontal)
             }
         }
         .navigationBarTitleDisplayMode(.inline)
@@ -28,11 +41,16 @@ struct BookView: View {
                 }
             }
         }
+        .sheet(isPresented: $showingReadingSession) {
+            NavigationView {
+                ReadingSessionView(book: book, currentPage: $currentPage)
+            }
+        }
         .sheet(isPresented: $isEditing) {
             NavigationView {
                 BookEditView(book: book)
             }
-            .interactiveDismissDisabled() // Prevent dismissal without saving
+            .interactiveDismissDisabled()
         }
     }
 }

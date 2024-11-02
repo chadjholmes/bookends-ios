@@ -9,25 +9,42 @@ import SwiftUI
 import SwiftData
 
 @main
-struct bookendApp: App {
-    var sharedModelContainer: ModelContainer = {
-        let schema = Schema([
-            Book.self,
-            ReadingSession.self
-        ])
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
-
+struct BookendApp: App {
+    let modelContainer: ModelContainer
+    
+    init() {
         do {
-            return try ModelContainer(for: schema, configurations: [modelConfiguration])
+            print("\n=== Initializing ModelContainer ===")
+            
+            let schema = Schema([
+                Book.self,
+                ReadingSession.self,
+                ReadingGoal.self
+            ])
+            
+            let config = ModelConfiguration(
+                schema: schema,
+                isStoredInMemoryOnly: false,
+                allowsSave: true
+            )
+            
+            print("\nCreating container...")
+            modelContainer = try ModelContainer(
+                for: schema,
+                configurations: config
+            )
+            print("✅ ModelContainer initialized successfully")
+            
         } catch {
-            fatalError("Could not create ModelContainer: \(error)")
+            print("❌ Failed to initialize ModelContainer: \(error)")
+            fatalError("Could not initialize ModelContainer: \(error)")
         }
-    }()
-
+    }
+    
     var body: some Scene {
         WindowGroup {
             LandingView()
+                .modelContainer(modelContainer)
         }
-        .modelContainer(sharedModelContainer)
     }
-}
+} 

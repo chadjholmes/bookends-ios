@@ -9,14 +9,14 @@ import SwiftData
 
 @Model
 public class ReadingSession {
-    public var id: String
-    public var book: Book?
+    @Attribute(.unique) public var id: UUID
+    @Relationship public var book: Book?
     public var startPage: Int
     public var endPage: Int
     public var duration: Int
     public var date: Date
     
-    init(id: String = UUID().uuidString,
+    init(id: UUID = UUID(),
          book: Book?,
          startPage: Int,
          endPage: Int,
