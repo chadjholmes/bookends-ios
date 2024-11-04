@@ -13,6 +13,7 @@ struct GoalsView: View {
     @State private var editingGoal: ReadingGoal?
     @State private var showingDeleteAlert = false
     @State private var goalToDelete: ReadingGoal?
+    @State private var showingClearSessionsAlert = false
     
     var body: some View {
         NavigationView {
@@ -76,6 +77,12 @@ struct GoalsView: View {
                         Image(systemName: "plus")
                     }
                 }
+                ToolbarItem(placement: .bottomBar) {
+                    Button("Clear All Sessions (Testing Only)") {
+                        showingClearSessionsAlert = true
+                    }
+                    .foregroundColor(.red)
+                }
             }
             .sheet(isPresented: $showingAddGoal) {
                 GoalEditView(mode: .create)
@@ -93,6 +100,14 @@ struct GoalsView: View {
             } message: {
                 Text("This action cannot be undone.")
             }
+            .alert("Clear All Reading Sessions?", isPresented: $showingClearSessionsAlert) {
+                Button("Cancel", role: .cancel) {}
+                Button("Clear", role: .destructive) {
+                    clearAllReadingSessions()
+                }
+            } message: {
+                Text("This will delete all reading sessions for all books. This action cannot be undone.")
+            }
         }
     }
     
@@ -108,6 +123,15 @@ struct GoalsView: View {
         modelContext.delete(goal)
         try? modelContext.save()
         print("Goal deleted successfully")
+    }
+    
+    private func clearAllReadingSessions() {
+        print("Clearing all reading sessions...")
+        sessions.forEach { session in
+            modelContext.delete(session)
+        }
+        try? modelContext.save()
+        print("All reading sessions cleared.")
     }
 }
 

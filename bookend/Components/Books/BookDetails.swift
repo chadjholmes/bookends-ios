@@ -8,6 +8,7 @@ struct BookDetails: View {
             Text(book.title)
                 .font(.title)
                 .bold()
+                .foregroundColor(.purple)
             
             if !book.author.isEmpty {
                 Text("by \(book.author)")
@@ -42,7 +43,11 @@ struct BookMetadata: View {
                     .font(.subheadline)
                     .foregroundColor(.secondary)
             }
-        
+
+            Text("Total Pages: \(String(book.totalPages))")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+    
             if let isbn = book.isbn {
                 Text("ISBN: \(isbn)")
                     .font(.caption)

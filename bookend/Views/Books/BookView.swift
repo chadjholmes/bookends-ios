@@ -9,6 +9,12 @@ struct BookView: View {
     @State private var currentPage: Int
     @State private var showingReadingSession = false
     @State private var selectedBook: Book?
+    @State private var showingClearSessionsAlert = false
+    @State private var isSessionsExpanded = false
+    @State private var showingCurrentPagePicker = false // State for showing the current page picker
+    
+    // State variable to hold reading sessions
+    @State private var readingSessions: [ReadingSession] = []
     
     public init(book: Book, currentPage: Int) {
         self.book = book
@@ -18,21 +24,55 @@ struct BookView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 20) {
-                BookCoverView(book: book)
-                BookDetailsView(book: book, currentPage: $currentPage, modelContext: modelContext)
-                
+                HStack {
+                    BookCover(book: book, currentPage: currentPage, width: 180, height: 270, showSubtitles: false)
+                    BookDetails(book: book)
+                }
+                 // Add Reading Session Button
                 Button(action: {
                     showingReadingSession = true
                 }) {
                     Label("Add Reading Session", systemImage: "book.closed")
-                        .frame(maxWidth: .infinity)
+                        .frame(maxWidth: .infinity) // Ensure full width
                         .padding()
                         .background(Color.purple)
                         .foregroundColor(.white)
                         .cornerRadius(10)
+                        .padding(.bottom, 40)
                 }
                 .padding(.horizontal)
+                // Current Page Display with Button
+                Button(action: {
+                    showingCurrentPagePicker = true
+                }) {
+                    HStack {
+                        Text("Current Page: \(currentPage) of \(book.totalPages)")
+                            .font(.headline)
+                        Spacer()
+                        Image(systemName: "chevron.right") // Arrow indicating more options
+                    }
+                    .padding()
+                    .background(Color(.systemGray6))
+                    .cornerRadius(8)
+                }
+                
+                // Accordion section for reading sessions (moved below Current Page)
+                DisclosureGroup("Reading Sessions (\(readingSessions.count))", isExpanded: $isSessionsExpanded) {
+                    if !readingSessions.isEmpty {
+                        ForEach(readingSessions, id: \.self) { session in
+                            ReadingSessionCard(session: session)
+                        }
+                    } else {
+                        Text("No reading sessions available.")
+                            .foregroundColor(.gray)
+                    }
+                }
+                .padding()
+                .background(Color(.systemGray6))
+                .cornerRadius(8)
+                .frame(maxWidth: .infinity) // Ensure full width to match button
             }
+            .padding(.horizontal) // Add horizontal padding to the entire VStack
         }
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -42,10 +82,27 @@ struct BookView: View {
                     selectedBook = book
                 }
             }
+            ToolbarItem(placement: .bottomBar) {
+                Button("Clear Reading Sessions") {
+                    showingClearSessionsAlert = true
+                }
+                .foregroundColor(.red)
+                .padding(.top, 20)
+            }
         }
         .sheet(isPresented: $showingReadingSession) {
             NavigationView {
-                ReadingSessionView(book: book, currentPage: $currentPage)
+                ReadingSessionView(book: book, currentPage: $currentPage) { newSession in
+                    // Update the reading sessions list when a new session is added
+                    readingSessions.append(newSession)
+                    // Save the new session to the model context
+                    do {
+                        try modelContext.insert(newSession)
+                        try modelContext.save()
+                    } catch {
+                        print("Failed to save new reading session: \(error.localizedDescription)")
+                    }
+                }
             }
         }
         .sheet(isPresented: $isEditing) {
@@ -54,161 +111,76 @@ struct BookView: View {
             }
             .interactiveDismissDisabled()
         }
-    }
-}
-
-// Cover Image Component
-struct BookCoverView: View {
-    let book: Book
-    
-    var body: some View {
-        Group {
-            if let image = try? book.loadCoverImage() {
-                Image(uiImage: image)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(height: 250)
-                    .cornerRadius(8)
-                    .shadow(radius: 5)
-            } else if let coverUrl = book.coverImageURL,
-                      let url = URL(string: coverUrl.absoluteString),
-                      let data = try? Data(contentsOf: url),
-                      let image = UIImage(data: data) {
-                Image(uiImage: image)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(height: 250)
-                    .cornerRadius(8)
-                    .shadow(radius: 5)
-            } else {
-                Image(systemName: "book.fill")
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(height: 250)
-                    .foregroundColor(.gray)
+        .alert("Clear All Reading Sessions for This Book?", isPresented: $showingClearSessionsAlert) {
+            Button("Cancel", role: .cancel) {}
+            Button("Clear", role: .destructive) {
+                clearAllReadingSessionsForBook()
             }
+        } message: {
+            Text("This will delete all reading sessions for this book. This action cannot be undone.")
         }
-        .padding(.horizontal)
-    }
-}
-
-// Book Details Component
-struct BookDetailsView: View {
-    let book: Book
-    @Binding var currentPage: Int
-    let modelContext: ModelContext
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(book.title)
-                .font(.title)
-                .bold()
-            
-            if !book.author.isEmpty {
-                Text("by \(book.author)")
-                    .font(.title2)
-                    .foregroundColor(.secondary)
-            }
-            
-            // Metadata section right after title/author
-            VStack(alignment: .leading, spacing: 8) {
-                if let publisher = book.publisher {
-                    Text("Publisher: \(publisher)")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                }
-            
-                if let publishYear = book.publishYear {
-                    Text("Published: \(String(publishYear))")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                }
-            
-                if let isbn = book.isbn {
-                    Text("ISBN: \(isbn)")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-                
-                Text("Added on \(book.createdAt.formatted(date: .abbreviated, time: .omitted))")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-            .padding(.vertical, 8)
-            
-            ReadingProgressView(book: book, currentPage: $currentPage, modelContext: modelContext)
+        .onAppear {
+            fetchReadingSessions() // Fetch reading sessions when the view appears
         }
-        .padding()
-    }
-}
-
-// Reading Progress Component
-struct ReadingProgressView: View {
-    let book: Book
-    @Binding var currentPage: Int
-    let modelContext: ModelContext
-    @State private var showingPagePicker = false
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Reading Progress")
-                .font(.headline)
-            
-            HStack {
-                Text("\(currentPage) of \(book.totalPages) pages")
-                Spacer()
-                Text("\(calculateProgress())%")
-            }
-            .font(.subheadline)
-            
-            ProgressView(value: Double(currentPage), total: Double(book.totalPages))
-                .tint(.purple)
-                .scaleEffect(x: 1, y: 2, anchor: .center)
-            
-            Button(action: {
-                showingPagePicker = true
-            }) {
-                HStack {
-                    Label("Set Current Page", systemImage: "text.aligncenter")
-                        .foregroundColor(.purple)
-                    Spacer()
-                }
-                .padding(.vertical, 8)
-            }
-        }
-        .padding(.top)
-        .sheet(isPresented: $showingPagePicker) {
+        .sheet(isPresented: $showingCurrentPagePicker) {
             NavigationView {
-                Picker("Current Page", selection: $currentPage) {
-                    ForEach(0...book.totalPages, id: \.self) { page in
+                Picker("Select Current Page", selection: $currentPage) {
+                    ForEach(1...book.totalPages, id: \.self) { page in
                         Text("\(page)").tag(page)
                     }
                 }
-                .pickerStyle(.wheel)
+                .pickerStyle(WheelPickerStyle())
                 .navigationTitle("Select Current Page")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .confirmationAction) {
                         Button("Done") {
-                            showingPagePicker = false
-                            do {
-                                book.currentPage = currentPage
-                                try modelContext.save()
-                            } catch {
-                                print("Failed to save current page: \(error.localizedDescription)")
-                            }
+                            // Update the book's currentPage when done
+                            book.currentPage = currentPage // Ensure this line updates the Book model
+                            print("Current page updated to: \(book.currentPage)") // Log the updated current page
+                            showingCurrentPagePicker = false
                         }
                     }
                 }
             }
-            .presentationDetents([.height(250)])
+            .presentationDetents([.height(250)]) // Optional: Adjust height as needed
         }
     }
-
-    private func calculateProgress() -> String {
-        guard book.totalPages > 0 else { return "0" }
-        let progress = (Double(currentPage) / Double(book.totalPages)) * 100
-        return String(format: "%.0f", progress)
+    
+    private func fetchReadingSessions() {
+        do {
+            // Fetch all reading sessions first
+            let allSessions = try modelContext.fetch(FetchDescriptor<ReadingSession>())
+            
+            // Filter sessions based on the current book's ID
+            readingSessions = allSessions.filter { session in
+                session.book?.id == self.book.id
+            }
+        } catch {
+            print("Failed to fetch reading sessions: \(error.localizedDescription)")
+        }
+    }
+    
+    private func clearAllReadingSessionsForBook() {
+        print("Clearing all reading sessions for book: \(book.title)")
+        
+        // Fetch sessions to delete
+        do {
+            let sessionsToDelete = try modelContext.fetch(FetchDescriptor<ReadingSession>()).filter { $0.book == book }
+            
+            for session in sessionsToDelete {
+                modelContext.delete(session)
+            }
+            
+            // Save changes and handle potential errors
+            try modelContext.save()
+            
+            // Clear the readingSessions array to reflect the changes
+            readingSessions.removeAll() // Clear the local array
+            print("All reading sessions for this book cleared.")
+        } catch {
+            print("Failed to clear reading sessions: \(error.localizedDescription)")
+        }
     }
 }
 

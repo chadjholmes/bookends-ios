@@ -17,6 +17,7 @@ struct BookAddView: View {
     @State private var selectedBook: OpenLibraryBook?
     @State private var showingEditionPicker = false
     @State private var selectedGroups: Set<BookGroup> = []
+    @State private var bookForEditing: Book?
     
     var body: some View {
         NavigationView {
@@ -27,59 +28,33 @@ struct BookAddView: View {
                     }
                 }
                 
-                if let book = selectedBook {
-                    Section(header: Text("Selected Edition")) {
-                        HStack {
-                            AsyncImageView(
-                                url: book.coverImageUrl,
-                                width: 60,
-                                height: 90
-                            )
-                            
-                            BookMetadata(book: Book(
-                                title: book.title,
-                                author: book.authorDisplay,
-                                totalPages: book.number_of_pages_median ?? 0,
-                                isbn: book.isbn?.first,
-                                publisher: book.publisher?.first,
-                                publishYear: book.first_publish_year,
-                                externalReference: ["openlibraryKey": book.key]
-                            ))
-                        }
-                        
-                        Button("Change Edition") {
-                            showingEditionPicker = true
-                        }
-                    }
-                }
-                
-                Section(header: Text("Book Details")) {
-                    TextField("Title", text: $title)
-                    TextField("Author", text: $author)
-                    if selectedBook == nil {
+                if bookForEditing == nil {
+                    Section(header: Text("Book Details")) {
+                        TextField("Title", text: $title)
+                        TextField("Author", text: $author)
                         TextField("Total Pages", text: $totalPages)
                             .keyboardType(.numberPad)
                     }
-                }
-                
-                Section(header: Text("Groups")) {
-                    ForEach(allGroups) { group in
-                        Toggle(isOn: Binding(
-                            get: { selectedGroups.contains(group) },
-                            set: { isSelected in
-                                if isSelected {
-                                    selectedGroups.insert(group)
-                                } else {
-                                    selectedGroups.remove(group)
+                    
+                    Section(header: Text("Groups")) {
+                        ForEach(allGroups) { group in
+                            Toggle(isOn: Binding(
+                                get: { selectedGroups.contains(group) },
+                                set: { isSelected in
+                                    if isSelected {
+                                        selectedGroups.insert(group)
+                                    } else {
+                                        selectedGroups.remove(group)
+                                    }
                                 }
-                            }
-                        )) {
-                            VStack(alignment: .leading) {
-                                Text(group.name)
-                                if let description = group.groupDescription {
-                                    Text(description)
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
+                            )) {
+                                VStack(alignment: .leading) {
+                                    Text(group.name)
+                                    if let description = group.groupDescription {
+                                        Text(description)
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                    }
                                 }
                             }
                         }
@@ -94,7 +69,7 @@ struct BookAddView: View {
                 trailing: Button("Save") {
                     saveBook()
                 }
-                .disabled(title.isEmpty || author.isEmpty || (selectedBook == nil && totalPages.isEmpty))
+                .disabled(bookForEditing == nil && (title.isEmpty || author.isEmpty || totalPages.isEmpty))
             )
             .sheet(isPresented: $showingSearch) {
                 BookSearchView(
@@ -106,67 +81,41 @@ struct BookAddView: View {
                     }
                 )
             }
-            .sheet(isPresented: $showingEditionPicker) {
-                if let book = selectedBook {
-                    let transformedBook = BookTransformer.transformToBook(book: book)
-                    BookEditionsView(
-                        selectedBook: transformedBook,
-                        onEditionSelected: { newEdition in
-                            handleEditionSelection(newEdition)
-                            showingEditionPicker = false
-                        }
-                    )
-                }
+            .sheet(item: $bookForEditing) { book in
+                BookEditView(book: book)
             }
         }
     }
     
     private func handleBookSelection(_ book: OpenLibraryBook) {
-        selectedBook = book
-        title = book.title
-        author = book.authorDisplay
-        if let pages = book.number_of_pages_median {
-            totalPages = String(pages)
-        }
+        let newBook = Book(
+            title: book.title,
+            author: book.authorDisplay,
+            totalPages: book.number_of_pages_median ?? 0,
+            isbn: book.isbn?.first,
+            publisher: book.publisher?.first,
+            publishYear: book.first_publish_year,
+            externalReference: ["openlibraryKey": book.key]
+        )
+        
         if let coverUrl = book.coverImageUrl {
             Task {
                 if let url = URL(string: coverUrl),
                    let (data, _) = try? await URLSession.shared.data(from: url),
                    let image = UIImage(data: data) {
-                    await MainActor.run {
-                        selectedImage = image
-                    }
+                    try? newBook.saveCoverImage(image)
                 }
             }
         }
+        
+        modelContext.insert(newBook)
+        
+        bookForEditing = newBook
         showingSearch = false
     }
     
     private func saveBook() {
-        let pages = selectedBook?.number_of_pages_median ?? Int(totalPages) ?? 0
-        
-        let book = Book(
-            title: title.trimmingCharacters(in: .whitespacesAndNewlines),
-            author: author.trimmingCharacters(in: .whitespacesAndNewlines),
-            totalPages: pages,
-            isbn: selectedBook?.isbn?.first,
-            publisher: selectedBook?.publisher?.first,
-            publishYear: selectedBook?.first_publish_year,
-            externalReference: ["openlibraryKey": selectedBook?.key ?? ""]
-        )
-        
-        if let image = selectedImage {
-            try? book.saveCoverImage(image)
-        }
-        
-        modelContext.insert(book)
-        
-        for group in selectedGroups {
-            let relationship = BookGroupRelationship(book: book, group: group)
-            modelContext.insert(relationship)
-        }
-        
-        dismiss()
+        // Remove or modify saveBook() since we're now handling it in the EditView
     }
     
     private func handleEditionSelection(_ edition: OpenLibraryEdition) {
@@ -176,7 +125,6 @@ struct BookAddView: View {
             totalPages = String(pages)
         }
         
-        // Update cover image if available
         if let coverUrl = edition.coverImageUrl {
             Task {
                 if let url = URL(string: coverUrl),
@@ -189,7 +137,6 @@ struct BookAddView: View {
             }
         }
         
-        // Create a new OpenLibraryBook with updated edition data
         if let currentBook = selectedBook {
             let updatedBook = OpenLibraryBook(
                 key: currentBook.key,

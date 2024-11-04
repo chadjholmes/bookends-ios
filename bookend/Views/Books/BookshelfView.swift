@@ -159,20 +159,23 @@ struct BookshelfView: View {
                         .font(.largeTitle)
                         .bold()
                     Spacer()
-                    HStack(spacing: 16) {
+                    HStack(spacing: 32) {
                         Button {
                             showingAddGroup = true
                         } label: {
                             Image(systemName: "folder.badge.plus")
-                                .font(.system(size: 22))
+                                .font(.system(size: 24))
+                                .frame(width: 44, height: 44)
                         }
                         Button {
                             showingAddBook = true
                         } label: {
                             Image(systemName: "plus")
-                                .font(.system(size: 22))
+                                .font(.system(size: 24))
+                                .frame(width: 44, height: 44)
                         }
                     }
+                    .padding(.leading)
                 }
                 .padding()
             }

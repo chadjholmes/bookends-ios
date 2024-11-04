@@ -7,7 +7,7 @@ struct BookCard: View {
     
     var body: some View {
         NavigationLink(destination: BookView(book: book, currentPage: book.currentPage)) {
-            BookCover(book: book)
+            BookCover(book: book, currentPage: book.currentPage)
         }
         .contextMenu {
             Button(role: .destructive) {

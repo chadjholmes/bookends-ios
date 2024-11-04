@@ -16,11 +16,14 @@ struct ReadingSessionView: View {
     @State private var showingEndPicker = false
     @State private var showingDurationPicker = false
     
-    init(book: Book, currentPage: Binding<Int>) {
+    var onSessionAdded: ((ReadingSession) -> Void)?
+    
+    init(book: Book, currentPage: Binding<Int>, onSessionAdded: ((ReadingSession) -> Void)? = nil) {
         self.book = book
         _currentPage = currentPage
         _startPage = State(initialValue: currentPage.wrappedValue)
         _endPage = State(initialValue: currentPage.wrappedValue)
+        self.onSessionAdded = onSessionAdded
     }
     
     var body: some View {
@@ -157,9 +160,11 @@ struct ReadingSessionView: View {
         
         do {
             try modelContext.save()
+            print("Reading session saved successfully: \(session)") // Log success
+            onSessionAdded?(session) // Call the closure to notify about the new session
             dismiss()
         } catch {
-            print("Failed to save reading session: \(error.localizedDescription)")
+            print("Failed to save reading session: \(error.localizedDescription)") // Log error
         }
     }
 }

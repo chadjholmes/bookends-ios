@@ -29,6 +29,9 @@ public final class Book {
     @Attribute(.externalStorage) public var coverImageData: Data?  // Ensure this property is included
     @Attribute(.externalStorage) public var coverImageURL: URL?
     
+    // Relationship to ReadingSession
+    @Relationship(deleteRule: .cascade) public var readingSessions: [ReadingSession]?
+    
     public init(id: UUID = UUID(),
                 title: String,
                 author: String,

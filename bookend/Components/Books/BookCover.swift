@@ -2,13 +2,17 @@ import SwiftUI
 
 struct BookCover: View {
     let book: Book
+    let currentPage: Int
     let width: CGFloat
     let height: CGFloat
-    
-    init(book: Book, width: CGFloat = 100, height: CGFloat = 150) {
+    let showSubtitles: Bool
+
+    init(book: Book, currentPage: Int, width: CGFloat? = nil, height: CGFloat? = nil, showSubtitles: Bool = true) {
         self.book = book
-        self.width = width
-        self.height = height
+        self.currentPage = currentPage
+        self.width = width ?? 100
+        self.height = height ?? 150
+        self.showSubtitles = showSubtitles
     }
     
     var progressPercentage: CGFloat {
@@ -57,16 +61,18 @@ struct BookCover: View {
                     )
             }
             
-            Text(book.title)
-                .font(.caption)
-                .lineLimit(1)
-                .frame(width: width)
-            
-            Text(book.author)
-                .font(.caption2)
-                .foregroundColor(.gray)
-                .lineLimit(1)
-                .frame(width: width)
+            if showSubtitles {
+                Text(book.title)
+                    .font(.caption)
+                    .lineLimit(1)
+                    .frame(width: width)
+                
+                Text(book.author)
+                    .font(.caption2)
+                    .foregroundColor(.gray)
+                    .lineLimit(1)
+                    .frame(width: width)
+            }
         }
     }
 }
@@ -81,7 +87,8 @@ struct BookCover: View {
                 totalPages: 180,
                 currentPage: 50,
                 externalReference: ["openLibraryKey": "OL6749322M"]
-            )
+            ),
+            currentPage: 50
         )
         
         // Book in progress (50%)
@@ -92,7 +99,8 @@ struct BookCover: View {
                 totalPages: 328,
                 currentPage: 164,
                 externalReference: ["openLibraryKey": "OL24382006M"]
-            )
+            ),
+            currentPage: 164
         )
         
         // Almost finished book (90%)
@@ -103,7 +111,8 @@ struct BookCover: View {
                 totalPages: 412,
                 currentPage: 371,
                 externalReference: ["openLibraryKey": "OL1532343M"]
-            )
+            ),
+            currentPage: 371
         )
         
         // Completed book (100%)
@@ -114,7 +123,8 @@ struct BookCover: View {
                 totalPages: 295,
                 currentPage: 295,
                 externalReference: ["openLibraryKey": "OL27479W"]
-            )
+            ),
+            currentPage: 295
         )
     }
     .padding()
