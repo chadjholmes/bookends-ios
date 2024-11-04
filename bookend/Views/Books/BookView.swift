@@ -8,6 +8,7 @@ struct BookView: View {
     @State private var isEditing = false
     @State private var currentPage: Int
     @State private var showingReadingSession = false
+    @State private var selectedBook: Book?
     
     public init(book: Book, currentPage: Int) {
         self.book = book
@@ -26,7 +27,7 @@ struct BookView: View {
                     Label("Add Reading Session", systemImage: "book.closed")
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color.blue)
+                        .background(Color.purple)
                         .foregroundColor(.white)
                         .cornerRadius(10)
                 }
@@ -38,6 +39,7 @@ struct BookView: View {
             ToolbarItem(placement: .topBarTrailing) {
                 Button("Edit") {
                     isEditing = true
+                    selectedBook = book
                 }
             }
         }
@@ -108,9 +110,33 @@ struct BookDetailsView: View {
                     .foregroundColor(.secondary)
             }
             
-            ReadingProgressView(book: book, currentPage: $currentPage, modelContext: modelContext)
+            // Metadata section right after title/author
+            VStack(alignment: .leading, spacing: 8) {
+                if let publisher = book.publisher {
+                    Text("Publisher: \(publisher)")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
             
-            BookMetadataView(book: book)
+                if let publishYear = book.publishYear {
+                    Text("Published: \(String(publishYear))")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+            
+                if let isbn = book.isbn {
+                    Text("ISBN: \(isbn)")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                
+                Text("Added on \(book.createdAt.formatted(date: .abbreviated, time: .omitted))")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            .padding(.vertical, 8)
+            
+            ReadingProgressView(book: book, currentPage: $currentPage, modelContext: modelContext)
         }
         .padding()
     }
@@ -121,6 +147,7 @@ struct ReadingProgressView: View {
     let book: Book
     @Binding var currentPage: Int
     let modelContext: ModelContext
+    @State private var showingPagePicker = false
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -135,57 +162,53 @@ struct ReadingProgressView: View {
             .font(.subheadline)
             
             ProgressView(value: Double(currentPage), total: Double(book.totalPages))
-                .tint(.blue)
+                .tint(.purple)
+                .scaleEffect(x: 1, y: 2, anchor: .center)
             
-            Stepper("Current Page: \(currentPage)", value: $currentPage, in: 0...book.totalPages)
-                .onChange(of: currentPage) { oldValue, newValue in
-                    book.currentPage = newValue
-                    do {
-                        try modelContext.save()
-                    } catch {
-                        print("Failed to save current page: \(error.localizedDescription)")
-                    }
+            Button(action: {
+                showingPagePicker = true
+            }) {
+                HStack {
+                    Label("Set Current Page", systemImage: "text.aligncenter")
+                        .foregroundColor(.purple)
+                    Spacer()
                 }
+                .padding(.vertical, 8)
+            }
         }
         .padding(.top)
+        .sheet(isPresented: $showingPagePicker) {
+            NavigationView {
+                Picker("Current Page", selection: $currentPage) {
+                    ForEach(0...book.totalPages, id: \.self) { page in
+                        Text("\(page)").tag(page)
+                    }
+                }
+                .pickerStyle(.wheel)
+                .navigationTitle("Select Current Page")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Done") {
+                            showingPagePicker = false
+                            do {
+                                book.currentPage = currentPage
+                                try modelContext.save()
+                            } catch {
+                                print("Failed to save current page: \(error.localizedDescription)")
+                            }
+                        }
+                    }
+                }
+            }
+            .presentationDetents([.height(250)])
+        }
     }
 
     private func calculateProgress() -> String {
         guard book.totalPages > 0 else { return "0" }
         let progress = (Double(currentPage) / Double(book.totalPages)) * 100
         return String(format: "%.0f", progress)
-    }
-}
-
-// Book Metadata Component
-struct BookMetadataView: View {
-    let book: Book
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Added on \(book.createdAt.formatted(date: .abbreviated, time: .omitted))")
-                .font(.caption)
-                .foregroundColor(.secondary)
-                .padding(.top)
-        
-            if let publisher = book.publisher {
-                Text("Publisher: \(publisher)")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-            }
-        
-            if let publishYear = book.publishYear {
-                Text("Published: \(publishYear)")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-            }
-        
-            if let isbn = book.isbn {
-                Text("ISBN: \(isbn)")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-        }
     }
 }
 

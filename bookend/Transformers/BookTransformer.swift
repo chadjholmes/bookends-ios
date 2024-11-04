@@ -1,4 +1,5 @@
 import Foundation
+import UIKit
 
 public class BookTransformer {
     
@@ -6,8 +7,11 @@ public class BookTransformer {
     /// - Parameters:
     ///   - book: The selected OpenLibraryBook.
     ///   - edition: The selected OpenLibraryEdition (optional).
+    ///   - coverImageData: Optional image data for the book cover.
     /// - Returns: A new Book instance populated with data from the selected book and edition.
     static func transformToBook(book: OpenLibraryBook, edition: OpenLibraryEdition? = nil) -> Book {
+        let coverImage: UIImage? = nil // Handle cover image separately if needed
+        
         return Book(
             title: edition?.title.isEmpty == false ? edition?.title ?? book.title : book.title,
             author: book.authorDisplay,

@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct BookEditionsView: View {
-    let selectedBook: OpenLibraryBook
+    let selectedBook: Book
     let onEditionSelected: (OpenLibraryEdition) -> Void
     
     @State private var editions: [OpenLibraryEdition] = []
@@ -97,13 +97,12 @@ struct BookEditionsView: View {
             
             let year = BookTransformer.parsePublishYear(from: edition.publish_date ?? "")
             if let year = year {
-                Text("Published: \(year)")
+                Text("Published: \(String(year))")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
             }
             
-            let publisherText = edition.displayPublisher ?? ""
-            Text("Publisher: \(publisherText)")
+            Text("Publisher: \(edition.displayPublisher)")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
         }
@@ -114,7 +113,13 @@ struct BookEditionsView: View {
         isLoading = true
         Task {
             do {
-                let workId = selectedBook.key
+                guard let workId = selectedBook.externalReference["openlibraryKey"] else {
+                    DispatchQueue.main.async {
+                        self.errorMessage = "Work ID not found."
+                        self.isLoading = false
+                    }
+                    return
+                }
                 let fetchedEditions = try await OpenLibraryService.shared.getEditions(workId: workId)
                 DispatchQueue.main.async {
                     self.editions = fetchedEditions

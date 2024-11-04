@@ -5,27 +5,40 @@ struct LandingView: View {
     
     var body: some View {
         TabView(selection: $selectedTab) {
-            BookListView()
+            HomeView()
                 .tabItem {
-                    Image(systemName: "books.vertical")
-                    Text("Books")
+                    Image(systemName: "house.fill")
+                        .environment(\.symbolVariants, selectedTab == 0 ? .fill : .none)
+                    Text("Home")
                 }
                 .tag(0)
             
-            DashboardView()
+            BookshelfView()
                 .tabItem {
-                    Image(systemName: "chart.bar")
-                    Text("Dashboard")
+                    Image(systemName: "books.vertical.fill")
+                        .environment(\.symbolVariants, selectedTab == 1 ? .fill : .none)
+                    Text("Bookshelf")
                 }
                 .tag(1)
+            
+            InsightsView()
+                .tabItem {
+                    Image(systemName: "chart.bar.fill")
+                        .environment(\.symbolVariants, selectedTab == 2 ? .fill : .none)
+                    Text("Insights")
+                }
+                .tag(2)
                 
             GoalsView()
                 .tabItem {
                     Image(systemName: "target")
+                        .environment(\.symbolVariants, selectedTab == 3 ? .fill : .none)
                     Text("Goals")
                 }
-                .tag(2)
+                .tag(3)
         }
+        .tint(.purple)
+        .edgesIgnoringSafeArea(.bottom)
     }
 }
 

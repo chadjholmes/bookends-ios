@@ -22,8 +22,7 @@ struct GoalsView: View {
                     .foregroundColor(.secondary)
                     .onAppear {
                         print("\n=== Goals View Debug ===")
-                        print("ModelContext present: \(modelContext != nil)")
-                        print("@Query goals count: \(goals.count)")
+                        print("Goals count: \(goals.count)")
                         
                         // Try direct fetch
                         do {
@@ -70,7 +69,7 @@ struct GoalsView: View {
                         }
                 }
             }
-            .navigationTitle("Reading Goals")
+            .navigationTitle("Goals")
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button(action: { showingAddGoal = true }) {
@@ -129,6 +128,19 @@ struct GoalEditView: View {
     @State private var target: String = ""
     @State private var isActive: Bool = true
     
+    @Query private var existingGoals: [ReadingGoal]
+    
+    private var isDuplicatePeriod: Bool {
+        switch mode {
+        case .create:
+            return existingGoals.contains { $0.period == selectedPeriod }
+        case .edit(let editingGoal):
+            return existingGoals.contains { goal in 
+                goal.period == selectedPeriod && goal.id != editingGoal.id
+            }
+        }
+    }
+    
     init(mode: Mode) {
         self.mode = mode
         if case .edit(let goal) = mode {
@@ -175,6 +187,14 @@ struct GoalEditView: View {
                         }
                     }
                 }
+                
+                if isDuplicatePeriod {
+                    Section {
+                        Text("A goal for this time period already exists")
+                            .foregroundColor(.red)
+                            .font(.caption)
+                    }
+                }
             }
             .navigationTitle(mode.title)
             .navigationBarTitleDisplayMode(.inline)
@@ -188,7 +208,7 @@ struct GoalEditView: View {
                     Button("Save") {
                         saveGoal()
                     }
-                    .disabled(target.isEmpty)
+                    .disabled(target.isEmpty || isDuplicatePeriod)
                 }
             }
         }
@@ -201,7 +221,7 @@ struct GoalEditView: View {
             return 
         }
         
-        print("ModelContext present: \(modelContext != nil)")
+        print("ModelContext initialized")
         
         switch mode {
         case .create:

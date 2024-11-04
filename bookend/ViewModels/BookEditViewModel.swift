@@ -2,30 +2,41 @@ import SwiftUI
 import Combine
 
 class BookEditViewModel: ObservableObject {
-    @Published var title: String = ""
-    @Published var author: String = ""
-    @Published var totalPages: String = ""
-    @Published var selectedImage: UIImage?
-    @Published var selectedBook: OpenLibraryBook?
+    @Published var book: Book?
+    @Published var title: String
+    @Published var author: String
+    @Published var totalPages: String
+    @Published var isbn: String
+    @Published var publisher: String
+    @Published var publishYear: String
+    @Published var genre: String
+    @Published var notes: String
+    @Published var selectedBook: Book?
     @Published var selectedEdition: OpenLibraryEdition?
+    @Published var selectedImage: UIImage?
     @Published var showAlert = false
     @Published var alertMessage = ""
 
-    var book: Book?
-
     init(book: Book? = nil) {
         self.book = book
-        if let existingBook = book {
-            title = existingBook.title
-            author = existingBook.author
-            totalPages = String(existingBook.totalPages)
-            
-            if let image = try? existingBook.loadCoverImage() {
-                selectedImage = image
-            }
-            
-            if let openlibKey = existingBook.externalReference["openlibraryKey"] {
-                fetchBookDetails(openlibKey: openlibKey)
+        self.selectedBook = book
+        self.title = book?.title ?? ""
+        self.author = book?.author ?? ""
+        self.totalPages = book?.totalPages != nil ? String(book!.totalPages) : ""
+        self.isbn = book?.isbn ?? ""
+        self.publisher = book?.publisher ?? ""
+        self.publishYear = book?.publishYear != nil ? String(book!.publishYear!) : ""
+        self.genre = book?.genre ?? ""
+        self.notes = book?.notes ?? ""
+
+        // Initialize cover image from existing book
+        if let book = book {
+            Task {
+                if let image = try? book.loadCoverImage() {
+                    await MainActor.run {
+                        self.selectedImage = image
+                    }
+                }
             }
         }
     }
@@ -34,8 +45,10 @@ class BookEditViewModel: ObservableObject {
         Task {
             do {
                 let fetchedBook = try await OpenLibraryService.shared.fetchBookDetails(key: openlibKey)
+                let transformedBook = BookTransformer.transformToBook(book: fetchedBook)
                 DispatchQueue.main.async {
-                    self.selectedBook = fetchedBook
+                    self.selectedBook = transformedBook
+                    self.updateUIWithSelectedBook(transformedBook)
                 }
             } catch {
                 handleFetchError(error)
@@ -46,7 +59,7 @@ class BookEditViewModel: ObservableObject {
     func selectEdition(_ edition: OpenLibraryEdition) {
         selectedEdition = edition
         title = edition.title.isEmpty ? selectedBook?.title ?? "" : edition.title
-        author = selectedBook?.authorDisplay ?? ""
+        author = selectedBook?.author ?? ""
         totalPages = edition.number_of_pages != nil ? String(edition.number_of_pages!) : ""
         loadCoverImage(from: edition.coverImageUrl)
     }
@@ -82,7 +95,7 @@ class BookEditViewModel: ObservableObject {
     }
 
     func searchOpenLibraryEditions() {
-        guard let workId = selectedBook?.key else {
+        guard let workId = selectedBook?.externalReference["openlibraryKey"] else {
             self.alertMessage = "No book selected to search editions."
             self.showAlert = true
             return
@@ -96,9 +109,7 @@ class BookEditViewModel: ObservableObject {
                         self.alertMessage = "No editions found for the selected book."
                         self.showAlert = true
                     } else {
-                        // Assuming you have a property to store the editions
                         self.selectedEdition = editions.first
-                        // Optionally, handle multiple editions
                     }
                 }
             } catch {
@@ -108,5 +119,24 @@ class BookEditViewModel: ObservableObject {
                 }
             }
         }
+    }
+
+    func loadCoverImage() {
+        if let book = selectedBook {
+            self.selectedImage = book.coverImageData.flatMap { UIImage(data: $0) } // Convert Data to UIImage
+        }
+    }
+
+    private func updateUIWithSelectedBook(_ book: Book) {
+        self.title = book.title
+        self.author = book.author
+        self.totalPages = String(book.totalPages)
+        self.isbn = book.isbn ?? ""
+        self.publisher = book.publisher ?? ""
+        self.publishYear = book.publishYear != nil ? String(book.publishYear!) : ""
+        self.genre = book.genre ?? ""
+        self.notes = book.notes ?? ""
+        // Load cover image if available
+        loadCoverImage()
     }
 }

@@ -19,7 +19,9 @@ struct BookendApp: App {
             let schema = Schema([
                 Book.self,
                 ReadingSession.self,
-                ReadingGoal.self
+                ReadingGoal.self,
+                BookGroup.self,
+                BookGroupRelationship.self
             ])
             
             let config = ModelConfiguration(
@@ -45,6 +47,7 @@ struct BookendApp: App {
         WindowGroup {
             LandingView()
                 .modelContainer(modelContainer)
+                .accentColor(.purple)
         }
     }
 } 

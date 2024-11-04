@@ -1,5 +1,5 @@
 //
-//  ContentView.swift
+//  InsightsDaView.swift
 //  bookend
 //
 //  Created by Chad Holmes on 11/1/24.
@@ -9,9 +9,28 @@ import SwiftUI
 import SwiftData
 import Charts
 
-struct DashboardView: View {
+struct InsightsView: View {
+    @Environment(\.modelContext) private var modelContext
     @Query private var books: [Book]
     @Query private var sessions: [ReadingSession]
+    @Query private var groups: [BookGroup]
+    @Query private var relationships: [BookGroupRelationship]
+
+    private func nukeGroupData() {
+        // Delete all relationships first
+        relationships.forEach { relationship in
+            modelContext.delete(relationship)
+        }
+        
+        // Delete all groups
+        groups.forEach { group in
+            modelContext.delete(group)
+        }
+        
+        // Save changes
+        try? modelContext.save()
+    }
+    
     
     var body: some View {
         NavigationStack {
@@ -34,7 +53,7 @@ struct DashboardView: View {
                 }
                 .padding()
             }
-            .navigationTitle("Reading Insights")
+            .navigationTitle("Insights")
         }
     }
 }
@@ -70,12 +89,16 @@ struct QuickStatsCard: View {
     }
     
     var body: some View {
-        VStack {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Quick Stats")
+                .font(.headline)
+            
             HStack(spacing: 20) {
                 StatBox(title: "Books", value: "\(books.count)")
                 StatBox(title: "Pages", value: "\(totalPagesRead)")
                 StatBox(title: "Hours", value: "\(totalReadingTime / 60)")
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding()
         .background(Color(.systemBackground))
@@ -87,6 +110,66 @@ struct QuickStatsCard: View {
 struct ReadingStreakCard: View {
     let sessions: [ReadingSession]
     
+    var weeklyStreaks: [(date: Date, didRead: Bool)] {
+        let calendar = Calendar.current
+        let now = Date()
+        
+        return (0...6).map { dayOffset in
+            let date = calendar.date(byAdding: .day, value: -dayOffset, to: now)!
+            let dayStart = calendar.startOfDay(for: date)
+            let didRead = sessions.contains { calendar.isDate($0.date, inSameDayAs: dayStart) }
+            return (date: dayStart, didRead: didRead)
+        }.reversed()
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Reading Streak")
+                .font(.headline)
+            
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 4) {
+                    ForEach(weeklyStreaks, id: \.date) { day in
+                        VStack(spacing: 4) {
+                            RoundedRectangle(cornerRadius: 2)
+                                .fill(day.didRead ? Color.green : Color.gray.opacity(0.3))
+                                .frame(height: 40)
+                            
+                            Text(day.date, format: .dateTime.weekday(.narrow))
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                }
+                
+                HStack(spacing: 40) {
+                    VStack(alignment: .leading) {
+                        Text("\(currentStreak)")
+                            .font(.title3)
+                            .bold()
+                        Text("Current")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    
+                    VStack(alignment: .leading) {
+                        Text("\(longestStreak)")
+                            .font(.title3)
+                            .bold()
+                        Text("Longest")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                .padding(.top, 8)
+            }
+        }
+        .padding()
+        .background(Color(.systemBackground))
+        .cornerRadius(12)
+        .shadow(radius: 2)
+    }
+    
     var currentStreak: Int {
         // Calculate current streak of consecutive days reading
         return calculateCurrentStreak()
@@ -95,38 +178,6 @@ struct ReadingStreakCard: View {
     var longestStreak: Int {
         // Calculate longest streak
         return calculateLongestStreak()
-    }
-    
-    var body: some View {
-        VStack(alignment: .leading) {
-            Text("Reading Streak")
-                .font(.headline)
-            
-            HStack {
-                VStack {
-                    Text("\(currentStreak)")
-                        .font(.title)
-                        .bold()
-                    Text("Current")
-                        .font(.caption)
-                }
-                
-                Spacer()
-                
-                VStack {
-                    Text("\(longestStreak)")
-                        .font(.title)
-                        .bold()
-                    Text("Longest")
-                        .font(.caption)
-                }
-            }
-            .padding()
-        }
-        .padding()
-        .background(Color(.systemBackground))
-        .cornerRadius(12)
-        .shadow(radius: 2)
     }
     
     private func calculateCurrentStreak() -> Int {
@@ -187,7 +238,7 @@ struct ReadingTimeCard: View {
         
         let calendar = Calendar.current
         let now = Date()
-        let sevenDaysAgo = calendar.date(byAdding: .day, value: -7, to: now)!
+        _ = calendar.date(byAdding: .day, value: -7, to: now)!
         
         // Create array of last 7 days
         var result: [(Date, Int)] = []
@@ -208,7 +259,7 @@ struct ReadingTimeCard: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Reading Time")
+            Text("Minutes Per Day")
                 .font(.headline)
             
             if weeklyReadingTime.isEmpty {
@@ -242,7 +293,7 @@ struct ReadingTimeCard: View {
                 .chartYAxis {
                     AxisMarks { value in
                         AxisGridLine()
-                        AxisValueLabel("\(value.as(Int.self) ?? 0)m")
+                        AxisValueLabel("\(value.as(Int.self) ?? 0)")
                     }
                 }
             }
@@ -312,7 +363,7 @@ struct ReadingProgressCard: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Reading Progress")
+            Text("Pages Per Day")
                 .font(.headline)
             
             if dailyProgress.isEmpty {
@@ -332,7 +383,7 @@ struct ReadingProgressCard: View {
                             x: .value("Date", item.date),
                             y: .value("Pages", item.pages)
                         )
-                        .foregroundStyle(.blue.opacity(0.1))
+                        .foregroundStyle(.purple.opacity(0.1))
                         .interpolationMethod(.catmullRom)
                     }
                 }
@@ -403,7 +454,183 @@ struct BookCompletionCard: View {
     }
 }
 
-#Preview {
-    DashboardView()
-        .modelContainer(for: [Book.self, ReadingSession.self], inMemory: true)
+#Preview("Insights") {
+    InsightsView_Preview.preview
+}
+
+// Separate struct to handle the preview setup
+private struct InsightsView_Preview {
+    @MainActor
+    static var preview: some View {
+        let config = ModelConfiguration(isStoredInMemoryOnly: true)
+        let container = try! ModelContainer(
+            for: Book.self,
+            ReadingSession.self,
+            BookGroup.self,
+            BookGroupRelationship.self,
+            ReadingGoal.self,
+            configurations: config
+        )
+        
+        // Create sample books
+        let books = [
+            Book(
+                title: "Dune",
+                author: "Frank Herbert",
+                genre: "Science Fiction",
+                totalPages: 412,
+                isbn: "9780441172719",
+                publisher: "Ace Books",
+                publishYear: 1965,
+                currentPage: 412,
+                externalReference: ["olid": "OL1532198W"]
+            ),
+            Book(
+                title: "Project Hail Mary",
+                author: "Andy Weir",
+                genre: "Science Fiction",
+                totalPages: 496,
+                isbn: "9780593135204",
+                publisher: "Ballantine Books",
+                publishYear: 2021,
+                currentPage: 280,
+                externalReference: ["olid": "OL27912876W"]
+            ),
+            Book(
+                title: "Foundation",
+                author: "Isaac Asimov",
+                genre: "Science Fiction",
+                totalPages: 255,
+                isbn: "9780553293357",
+                publisher: "Bantam Spectra",
+                publishYear: 1951,
+                currentPage: 255,
+                externalReference: ["olid": "OL46125W"]
+            ),
+            Book(
+                title: "Snow Crash",
+                author: "Neal Stephenson",
+                genre: "Science Fiction",
+                totalPages: 468,
+                isbn: "9780553380958",
+                publisher: "Bantam Books",
+                publishYear: 1992,
+                currentPage: 123,
+                externalReference: ["olid": "OL1794949W"]
+            )
+        ]
+        
+        // Add books to container
+        for book in books {
+            container.mainContext.insert(book)
+        }
+        
+        // Create reading sessions over the past week
+        let calendar = Calendar.current
+        let now = Date()
+        
+        let sessions: [ReadingSession] = [
+            // Today: Long reading session of Dune
+            ReadingSession(
+                book: books[0],
+                startPage: 380,
+                endPage: 412,
+                duration: 45,
+                date: now
+            ),
+            
+            // Yesterday: Project Hail Mary
+            ReadingSession(
+                book: books[1],
+                startPage: 250,
+                endPage: 280,
+                duration: 60,
+                date: calendar.date(byAdding: .day, value: -1, to: now)!
+            ),
+            
+            // 3 days ago: More Project Hail Mary
+            ReadingSession(
+                book: books[1],
+                startPage: 200,
+                endPage: 250,
+                duration: 90,
+                date: calendar.date(byAdding: .day, value: -3, to: now)!
+            ),
+            
+            // 4 days ago: Finished Foundation
+            ReadingSession(
+                book: books[2],
+                startPage: 200,
+                endPage: 255,
+                duration: 120,
+                date: calendar.date(byAdding: .day, value: -4, to: now)!
+            ),
+            
+            // 5 days ago: Started Snow Crash
+            ReadingSession(
+                book: books[3],
+                startPage: 100,
+                endPage: 123,
+                duration: 30,
+                date: calendar.date(byAdding: .day, value: -5, to: now)!
+            ),
+            
+            // A week ago: Foundation progress
+            ReadingSession(
+                book: books[2],
+                startPage: 150,
+                endPage: 200,
+                duration: 75,
+                date: calendar.date(byAdding: .day, value: -7, to: now)!
+            )
+        ]
+        
+        // Add reading sessions to container
+        for session in sessions {
+            container.mainContext.insert(session)
+        }
+        
+        // Create some reading goals
+        let goals = [
+            ReadingGoal(
+                type: .pages,
+                target: 50,
+                period: .daily,
+                startDate: calendar.date(byAdding: .day, value: -30, to: now)!
+            ),
+            ReadingGoal(
+                type: .minutes,
+                target: 300,
+                period: .weekly,
+                startDate: calendar.date(byAdding: .day, value: -30, to: now)!
+            ),
+            ReadingGoal(
+                type: .books,
+                target: 4,
+                period: .monthly,
+                startDate: calendar.date(byAdding: .day, value: -30, to: now)!
+            )
+        ]
+        
+        // Add goals to container
+        for goal in goals {
+            container.mainContext.insert(goal)
+        }
+        
+        // Create a book group
+        let sciFiGroup = BookGroup(
+            name: "Science Fiction Classics",
+            groupDescription: "Classic sci-fi novels that defined the genre"
+        )
+        container.mainContext.insert(sciFiGroup)
+        
+        // Create group relationships
+        for book in books {
+            let relationship = BookGroupRelationship(book: book, group: sciFiGroup)
+            container.mainContext.insert(relationship)
+        }
+        
+        return InsightsView()
+            .modelContainer(container)
+    }
 }
