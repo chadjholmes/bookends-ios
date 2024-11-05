@@ -25,9 +25,7 @@ struct HomeView: View {
                     Spacer()
                     GoalRings(goals: goals, sessions: sessions)
                         .frame(maxWidth: screenWidth, alignment: .center)
-                        .padding(.bottom, screenHeight * 0.05)
                         .padding(.horizontal, screenWidth * 0.05)
-                    Spacer()
                     Text("Jump back in...")
                         .bold()
                         .frame(maxWidth: screenWidth, alignment: .leading)
@@ -115,28 +113,9 @@ private struct BookCarousel: View {
                 }
             }
             .padding(.horizontal, screenWidth * 0.05)
-            .overlay(
-                TrailingGradient(),
-                alignment: .trailing
-            )
         }
         .frame(height: screenHeight * 0.25)
         .padding(.bottom, screenHeight * 0.1)
-    }
-}
-
-private struct TrailingGradient: View {
-    var body: some View {
-        let screenWidth = UIScreen.main.bounds.width
-        
-        HStack {
-            Spacer()
-            GradientOverlay(
-                direction: .trailing,
-                color: Color(.systemBackground)
-            )
-            .frame(width: screenWidth * 0.1)
-        }
     }
 }
 
