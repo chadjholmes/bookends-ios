@@ -2,9 +2,8 @@ import SwiftUI
 import SwiftData
 
 struct GoalRings: View {
-    @State private var selectedDate: Date = Calendar.current.startOfDay(for: Date()) // State for selected date
-    @State private var currentWeekOffset: Int = 0 // To track the current week offset
-    @Environment(\.colorScheme) private var colorScheme // Add this line
+    @State private var selectedDate: Date = Calendar.current.startOfDay(for: Date())
+    @Environment(\.colorScheme) private var colorScheme
     let goals: [ReadingGoal]
     let sessions: [ReadingSession]
     
@@ -22,13 +21,6 @@ struct GoalRings: View {
         .yearly: 6
     ]
     
-    private let ringDiameters: [ReadingGoal.GoalPeriod: CGFloat] = [
-        .daily: 260,
-        .weekly: 220,
-        .monthly: 180,
-        .yearly: 140
-    ]
-    
     private let allPeriods: [ReadingGoal.GoalPeriod] = [
         .daily,
         .weekly,
@@ -36,108 +28,42 @@ struct GoalRings: View {
         .yearly
     ]
     
-    var sortedGoals: [ReadingGoal] {
-        goals.sorted { $0.period.rawValue < $1.period.rawValue }
-    }
-    
     var body: some View {
+        let width = UIScreen.main.bounds.width // Get screen width
+        let height = UIScreen.main.bounds.height // Get screen height
+        
+        // Calculate ring diameters based on screen width
+        let ringDiameters: [ReadingGoal.GoalPeriod: CGFloat] = [
+            .daily: width * 0.55,
+            .weekly: width * 0.45,
+            .monthly: width * 0.35,
+            .yearly: width * 0.25
+        ]
+        
         VStack {
-            // Horizontal Date Picker
-            HStack {
-                // Double chevron - back 5 days
-                Button(action: {
-                    if let newDate = Calendar.current.date(byAdding: .day, value: -5, to: selectedDate) {
-                        selectedDate = Calendar.current.startOfDay(for: newDate)
-                    }
-                }) {
-                    Image(systemName: "chevron.backward.2")
-                        .fontWeight(.bold)
-                        .padding(8)
-                }
-                
-                // Single chevron - back 1 day
-                Button(action: {
-                    if let newDate = Calendar.current.date(byAdding: .day, value: -1, to: selectedDate) {
-                        selectedDate = Calendar.current.startOfDay(for: newDate)
-                    }
-                }) {
-                    Image(systemName: "chevron.backward")
-                        .fontWeight(.bold)
-                        .padding(8)
-                }
-                
-                Spacer()
-                
-                // Date display
-                HStack(spacing: 0) {
-                    ForEach(-2...2, id: \.self) { offset in
-                        if let date = Calendar.current.date(byAdding: .day, value: offset, to: selectedDate) {
-                            Text(offset == 0 ? dateFormatter.string(from: date) : String(Calendar.current.component(.day, from: date)))
-                                .frame(minWidth: offset == 0 ? 80 : 34, maxWidth: offset == 0 ? 80 : 34)  // Use minWidth and maxWidth
-                                .padding(.vertical, 6)
-                                .background(offset == 0 ? Color.purple : Color.clear)
-                                .foregroundColor(
-                                    offset == 0 
-                                        ? Color.white 
-                                        : (colorScheme == .dark ? Color.white : Color.black)
-                                )
-                                .cornerRadius(8)
-                        }
-                    }
-                }
-                
-                Spacer()
-                
-                // Single chevron - forward 1 day
-                Button(action: {
-                    if let newDate = Calendar.current.date(byAdding: .day, value: 1, to: selectedDate) {
-                        selectedDate = Calendar.current.startOfDay(for: newDate)
-                    }
-                }) {
-                    Image(systemName: "chevron.forward")
-                        .fontWeight(.bold)
-                        .padding(8)
-                }
-                
-                // Double chevron - forward 5 days
-                Button(action: {
-                    if let newDate = Calendar.current.date(byAdding: .day, value: 5, to: selectedDate) {
-                        selectedDate = Calendar.current.startOfDay(for: newDate)
-                    }
-                }) {
-                    Image(systemName: "chevron.forward.2")
-                        .fontWeight(.bold)
-                        .padding(8)
-                }
-            }
-            .padding(.horizontal)
-            .padding(.bottom, 8)
-            
+            // Scrollable Date Picker
+            datePicker(width: width, height: height)
+                .frame(maxWidth: width, alignment: .center)
+            // Rings and keys
             ZStack {
-                // Ring keys in corners
                 VStack {
                     HStack {
-                        // Top left - Daily
                         keyItem(for: .daily)
                         Spacer()
-                        // Top right - Weekly
-                        keyItem(for: .weekly)
+                        keyItem(for: .weekly, mirrored: true) // Mirrored for Weekly
                     }
                     Spacer()
                     HStack {
-                        // Bottom left - Monthly
                         keyItem(for: .monthly)
                         Spacer()
-                        // Bottom right - Yearly
-                        keyItem(for: .yearly)
+                        keyItem(for: .yearly, mirrored: true) // Mirrored for Yearly
                     }
                 }
-                .padding(20)
+                .padding(width * 0.02)
                 
-                // Always show all rings, regardless of goals existence
+                // Always show all rings
                 ForEach(allPeriods, id: \.self) { period in
                     if let goal = goals.first(where: { $0.period == period }) {
-                        // Show active goal ring
                         GoalRing(
                             goal: goal,
                             sessions: sessions,
@@ -147,12 +73,8 @@ struct GoalRings: View {
                             selectedDate: selectedDate
                         )
                     } else {
-                        // Show empty ring for missing goal period
                         Circle()
-                            .stroke(
-                                Color.gray.opacity(colorScheme == .dark ? 0.3 : 0.2),
-                                lineWidth: ringWidths[period] ?? 10
-                            )
+                            .stroke(Color.gray.opacity(colorScheme == .dark ? 0.3 : 0.2), lineWidth: ringWidths[period] ?? 10)
                             .frame(width: ringDiameters[period] ?? 200)
                     }
                 }
@@ -160,59 +82,98 @@ struct GoalRings: View {
                 // Center content
                 if goals.isEmpty {
                     Image(systemName: "book.closed")
-                        .font(.system(size: 30))
+                        .font(.system(size: height * 0.03)) // Relative size based on height
                         .foregroundColor(colorScheme == .dark ? .white : .secondary)
                 } else {
-                    // Show book icon with the yearly target if it exists
                     VStack(spacing: 4) {
                         Image(systemName: "book.closed.fill")
-                            .font(.system(size: 30))
+                            .font(.system(size: height * 0.03)) // Relative size based on height
                             .foregroundColor(colorScheme == .dark ? .white : .secondary)
                     }
                 }
             }
-            .frame(height: 350) // Increased height to fit all rings
+            .frame(height: height * 0.35) // Adjusted height to be 35% of screen height
             .padding(.vertical)
+        }
+        .padding(.horizontal)
+    }
+    
+    private func datePicker(width: CGFloat, height: CGFloat) -> some View {
+        let dateRange = -2...2 // Range for the date picker
+        
+        return HStack(spacing: width * 0.05) { // Add spacing between main elements
+            // Double left chevron
+            Button(action: { changeDate(by: -5) }) {
+                Image(systemName: "chevron.backward.2")
+                    .font(.system(size: width * 0.045))
+            }
+            
+            // Center date group
+            HStack(spacing: width * 0.02) { // Spacing between dates
+                ForEach(dateRange, id: \.self) { offset in
+                    if let date = Calendar.current.date(byAdding: .day, value: offset, to: selectedDate) {
+                        Text(offset == 0 ? dateFormatter.string(from: date) : String(Calendar.current.component(.day, from: date)))
+                            .font(.system(size: width * 0.030))
+                            .frame(width: offset == 0 ? width * 0.25 : width * 0.08)
+                            .padding(.vertical, height * 0.015)
+                            .background(offset == 0 ? Color.purple : Color.clear)
+                            .foregroundColor(offset == 0 ? Color.white : (colorScheme == .dark ? Color.white : Color.black))
+                            .cornerRadius(8)
+                            .onTapGesture {
+                                selectedDate = date
+                            }
+                    }
+                }
+            }
+            
+            // Double right chevron
+            Button(action: { changeDate(by: 5) }) {
+                Image(systemName: "chevron.forward.2")
+                    .font(.system(size: width * 0.045))
+            }
+        }
+        .frame(maxWidth: width, alignment: .center)
+    }
+    
+    private func changeDate(by value: Int) {
+        if let newDate = Calendar.current.date(byAdding: .day, value: value, to: selectedDate) {
+            selectedDate = Calendar.current.startOfDay(for: newDate)
         }
     }
     
     private var dateFormatter: DateFormatter {
         let formatter = DateFormatter()
-        formatter.dateFormat = "E, d" // Example: "Sun, 3"
+        formatter.dateFormat = "E MMM, d"
         return formatter
     }
     
-    private func unitForGoalType(_ type: ReadingGoal.GoalType) -> String {
-        switch type {
-        case .pages:
-            return "pages"
-        case .minutes:
-            return "min"
-        case .books:
-            return "books"
-        }
-    }
-    
-    private func keyItem(for period: ReadingGoal.GoalPeriod) -> some View {
-        HStack(spacing: 8) {
-            RoundedRectangle(cornerRadius: 3)
-                .fill(ringColors[period] ?? .gray)
-                .frame(width: 14, height: 14)
-                .alignmentGuide(.leading) { d in d[.leading] }
-            
-            Text(period.rawValue.capitalized)
-                .font(.caption2)
-                .foregroundColor(.secondary)
-                .fixedSize(horizontal: true, vertical: false)
+    private func keyItem(for period: ReadingGoal.GoalPeriod, mirrored: Bool = false) -> some View {
+        let width = UIScreen.main.bounds.width // Get screen width
+        let height = UIScreen.main.bounds.height // Get screen height
+
+        return HStack(spacing: 8) { // Ensure to return the HStack
+            if mirrored {
+                Text(period.rawValue.capitalized)
+                    .font(.system(size: width * 0.035)) // Relative font size
+                    .foregroundColor(.secondary)
+                    .fixedSize(horizontal: true, vertical: false)
+                RoundedRectangle(cornerRadius: 3)
+                    .fill(ringColors[period] ?? .gray)
+                    .frame(width: width * 0.035, height: width * 0.035) // Relative size
+            } else {
+                RoundedRectangle(cornerRadius: 3)
+                    .fill(ringColors[period] ?? .gray)
+                    .frame(width: width * 0.035, height: width * 0.035) // Relative size
+                Text(period.rawValue.capitalized)
+                    .font(.system(size: width * 0.035)) // Relative font size
+                    .foregroundColor(.secondary)
+                    .fixedSize(horizontal: true, vertical: false)
+            }
         }
         .frame(minWidth: 80, alignment: .leading)
-        .padding(.vertical, 6)
-        .padding(.horizontal, 8)
-        .background(
-            colorScheme == .dark 
-                ? Color.black.opacity(0.6) 
-                : Color.white.opacity(0.8)
-        )
+        .padding(.vertical, height * 0.015) // Relative vertical padding
+        .padding(.horizontal, width * 0.02) // Relative horizontal padding
+        .background(colorScheme == .dark ? Color.black.opacity(0.6) : Color.white.opacity(0.8))
         .cornerRadius(8)
     }
 }
@@ -233,34 +194,19 @@ struct GoalRing: View {
         
         switch goal.period {
         case .daily:
-            // For daily goals, only use sessions from the selected date
-            filteredSessions = sessions.filter { session in
-                calendar.isDate(session.date, inSameDayAs: selectedDate)
-            }
-            
+            filteredSessions = sessions.filter { calendar.isDate($0.date, inSameDayAs: selectedDate) }
         case .weekly:
-            // For weekly goals, use sessions from the current week
             let weekStart = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: selectedDate))!
             let weekEnd = calendar.date(byAdding: .day, value: 7, to: weekStart)!
-            filteredSessions = sessions.filter { session in
-                session.date >= weekStart && session.date < weekEnd
-            }
-            
+            filteredSessions = sessions.filter { $0.date >= weekStart && $0.date < weekEnd }
         case .monthly:
-            // For monthly goals, use sessions from the current month
             let monthStart = calendar.date(from: calendar.dateComponents([.year, .month], from: selectedDate))!
             let monthEnd = calendar.date(byAdding: .month, value: 1, to: monthStart)!
-            filteredSessions = sessions.filter { session in
-                session.date >= monthStart && session.date < monthEnd
-            }
-            
+            filteredSessions = sessions.filter { $0.date >= monthStart && $0.date < monthEnd }
         case .yearly:
-            // For yearly goals, use sessions from the current year
             let yearStart = calendar.date(from: calendar.dateComponents([.year], from: selectedDate))!
             let yearEnd = calendar.date(byAdding: .year, value: 1, to: yearStart)!
-            filteredSessions = sessions.filter { session in
-                session.date >= yearStart && session.date < yearEnd
-            }
+            filteredSessions = sessions.filter { $0.date >= yearStart && $0.date < yearEnd }
         }
         
         return goal.calculateProgress(from: filteredSessions)
@@ -268,22 +214,14 @@ struct GoalRing: View {
     
     var body: some View {
         ZStack {
-            // Background ring
             Circle()
                 .stroke(Color.gray.opacity(0.2), lineWidth: width)
                 .frame(width: diameter, height: diameter)
             
-            // Progress ring (only if goal exists)
             if goal != nil {
                 Circle()
                     .trim(from: 0, to: progress)
-                    .stroke(
-                        color,
-                        style: StrokeStyle(
-                            lineWidth: width,
-                            lineCap: .round
-                        )
-                    )
+                    .stroke(color, style: StrokeStyle(lineWidth: width, lineCap: .round))
                     .frame(width: diameter, height: diameter)
                     .rotationEffect(.degrees(-90))
             }

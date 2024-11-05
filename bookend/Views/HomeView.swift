@@ -10,48 +10,41 @@ struct HomeView: View {
     
     var body: some View {
         NavigationStack {
-            ZStack {
-                ScrollView {
-                    VStack(spacing: 35) {
-                        // Header with more bottom padding
-                        Text("Bookends📚")
-                            .font(.largeTitle)
-                            .bold()
+            let screenWidth = UIScreen.main.bounds.width
+            let screenHeight = UIScreen.main.bounds.height
+            
+            ScrollView {
+                VStack(spacing: screenHeight * 0.025) {
+                    Text("Bookends📚")
+                        .font(.system(size: screenWidth * 0.08))
+                        .bold()
+                        .frame(maxWidth: screenWidth, alignment: .leading)
+                        .padding(.horizontal, screenWidth * 0.05)
+                        .padding(.top, screenHeight * 0.07)
+                        .padding(.leading, screenWidth * 0.05)
+                    Spacer()
+                    GoalRings(goals: goals, sessions: sessions)
+                        .frame(maxWidth: screenWidth, alignment: .center)
+                        .padding(.bottom, screenHeight * 0.05)
+                        .padding(.horizontal, screenWidth * 0.05)
+                    Spacer()
+                    Text("Jump back in...")
+                        .bold()
+                        .frame(maxWidth: screenWidth, alignment: .leading)
+                        .padding(.leading, screenWidth * 0.05)
+                        .font(.system(size: screenWidth * 0.035))
+                    if books.isEmpty {
+                        EmptyBooksList(showingAddBook: $showingAddBook)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                    } else {
+                        BookCarousel(books: books, modelContext: modelContext)
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.horizontal)
-                            .padding(.top, 60)
-                            .padding(.bottom, 80)
-                        
-                        // Goals section in its own container
-                        VStack(spacing: 0) {
-                            GoalRings(goals: goals, sessions: sessions)
-                                .frame(height: 250)
-                        }
-                        .padding(.horizontal)
-                        
-                        // Books section
-                        GeometryReader { geometry in
-                            VStack(alignment: .leading, spacing: 16) {
-                                Text("Jump back in...")
-                                    .bold()
-                                    .padding(.horizontal)
-                                    .font(.subheadline)
-                                
-                                if books.isEmpty {
-                                    EmptyBooksList(showingAddBook: $showingAddBook)
-                                } else {
-                                    BookCarousel(books: books, modelContext: modelContext)
-                                }
-                            }
-                            .frame(width: geometry.size.width, 
-                                   height: geometry.size.height, 
-                                   alignment: .bottom)
-                        }
-                        .frame(height: UIScreen.main.bounds.height * 0.4)
+                            .padding(.leading, screenWidth * 0.05)
                     }
                 }
-                .scrollDisabled(true)
+                .padding(.bottom, screenHeight * 0.025)
             }
+            .scrollDisabled(true)
             .navigationBarHidden(true)
             .edgesIgnoringSafeArea(.top)
             .sheet(isPresented: $showingAddBook) {
@@ -65,23 +58,28 @@ private struct EmptyBooksList: View {
     @Binding var showingAddBook: Bool
     
     var body: some View {
+        let screenWidth = UIScreen.main.bounds.width
+        let screenHeight = UIScreen.main.bounds.height
+        
         VStack {
             Text("No books added yet.")
                 .foregroundColor(.gray)
-                .padding(.bottom, 20)
+                .font(.system(size: screenWidth * 0.04))
+                .padding(.bottom, screenHeight * 0.025)
             
             Button(action: {
                 showingAddBook = true
             }) {
                 Text("Add a Book")
-                    .font(.headline)
+                    .font(.system(size: screenWidth * 0.04))
                     .foregroundColor(.purple)
-                    .padding()
+                    .padding(.vertical, screenHeight * 0.015)
+                    .padding(.horizontal, screenWidth * 0.05)
                     .background(Color.purple.opacity(0.1))
                     .cornerRadius(8)
             }
         }
-        .padding(.bottom, 80)
+        .padding(.bottom, screenHeight * 0.1)
     }
 }
 
@@ -104,8 +102,11 @@ private struct BookCarousel: View {
     }
     
     var body: some View {
+        let screenWidth = UIScreen.main.bounds.width
+        let screenHeight = UIScreen.main.bounds.height
+        
         ScrollView(.horizontal, showsIndicators: false) {
-            LazyHStack(spacing: 20) {
+            LazyHStack(spacing: screenWidth * 0.05) {
                 ForEach(sortedBooks) { book in
                     BookCard(book: book, onDelete: {
                         book.cleanupStoredImage()
@@ -113,26 +114,28 @@ private struct BookCarousel: View {
                     }, currentGroup: nil)
                 }
             }
-            .padding(.horizontal)
+            .padding(.horizontal, screenWidth * 0.05)
             .overlay(
                 TrailingGradient(),
                 alignment: .trailing
             )
         }
-        .frame(height: 200)
-        .padding(.bottom, 80)
+        .frame(height: screenHeight * 0.25)
+        .padding(.bottom, screenHeight * 0.1)
     }
 }
 
 private struct TrailingGradient: View {
     var body: some View {
+        let screenWidth = UIScreen.main.bounds.width
+        
         HStack {
             Spacer()
             GradientOverlay(
                 direction: .trailing,
                 color: Color(.systemBackground)
             )
-            .frame(width: 40)
+            .frame(width: screenWidth * 0.1)
         }
     }
 }
