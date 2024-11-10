@@ -4,11 +4,12 @@ struct BookDetailsSection: View {
     @ObservedObject var viewModel: BookEditViewModel
 
     var body: some View {
-        VStack(spacing: 5) {
+        VStack(spacing: 8) {
             // Title Field
             Text("Title")
                 .font(.headline)
                 .frame(maxWidth: .infinity, alignment: .leading)
+                .accentColor(.purple)
             TextField("Enter title", text: $viewModel.title)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
             
@@ -64,5 +65,7 @@ struct BookDetailsSection: View {
                 .textFieldStyle(RoundedBorderTextFieldStyle())
         }
         .padding()
+        .background(Color(.systemGray6))
+        .cornerRadius(8)
     }
 } 

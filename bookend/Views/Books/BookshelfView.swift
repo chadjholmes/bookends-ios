@@ -72,128 +72,153 @@ struct BookshelfView: View {
     
     var body: some View {
         NavigationStack {
-            ScrollView { 
-                // Groups horizontal scroll
-                ScrollView(.horizontal, showsIndicators: false) {
-                    LazyHStack(spacing: 12) {
-                        Button {
-                            selectedGroupId = nil
-                        } label: {
-                            Text("All Books")
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 6)
-                                .background(selectedGroupId == nil ? .purple : .gray.opacity(0.2))
-                                .foregroundColor(selectedGroupId == nil ? .white : .primary)
-                                .clipShape(RoundedRectangle(cornerRadius: 8))
-                        }
-                        
-                        ForEach(groups) { group in
+            ZStack(alignment: .top) {
+                ScrollView {
+                    // Groups horizontal scroll
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        LazyHStack(spacing: 12) {
                             Button {
-                                selectedGroupId = group.id
+                                selectedGroupId = nil
                             } label: {
-                                Text(group.name)
+                                Text("All Books")
                                     .padding(.horizontal, 12)
                                     .padding(.vertical, 6)
-                                    .background(selectedGroupId == group.id ? .purple : .gray.opacity(0.2))
-                                    .foregroundColor(selectedGroupId == group.id ? .white : .primary)
+                                    .background(selectedGroupId == nil ? .purple : .gray.opacity(0.2))
+                                    .foregroundColor(selectedGroupId == nil ? .white : .primary)
                                     .clipShape(RoundedRectangle(cornerRadius: 8))
                             }
-                            .contextMenu {
-                                Button("Edit Group") {
-                                    // TODO: Show edit group sheet
+                            
+                            ForEach(groups) { group in
+                                Button {
+                                    selectedGroupId = group.id
+                                } label: {
+                                    Text(group.name)
+                                        .padding(.horizontal, 12)
+                                        .padding(.vertical, 6)
+                                        .background(selectedGroupId == group.id ? .purple : .gray.opacity(0.2))
+                                        .foregroundColor(selectedGroupId == group.id ? .white : .primary)
+                                        .clipShape(RoundedRectangle(cornerRadius: 8))
                                 }
-                                Button("Delete Group", role: .destructive) {
-                                    if selectedGroupId == group.id {
-                                        selectedGroupId = nil
+                                .contextMenu {
+                                    Button("Edit Group") {
+                                        // TODO: Show edit group sheet
                                     }
-                                    
-                                    // First, delete all relationships for this group
-                                    let relationshipsToDelete = relationships.filter { $0.group.id == group.id }
-                                    relationshipsToDelete.forEach { modelContext.delete($0) }
-                                    
-                                    // Then delete the group
-                                    modelContext.delete(group)
-                                    
-                                    // Save changes
-                                    try? modelContext.save()
-                                    
-                                    // Run cleanup
-                                    cleanupOrphanedData()
+                                    Button("Delete Group", role: .destructive) {
+                                        if selectedGroupId == group.id {
+                                            selectedGroupId = nil
+                                        }
+                                        
+                                        // First, delete all relationships for this group
+                                        let relationshipsToDelete = relationships.filter { $0.group.id == group.id }
+                                        relationshipsToDelete.forEach { modelContext.delete($0) }
+                                        
+                                        // Then delete the group
+                                        modelContext.delete(group)
+                                        
+                                        // Save changes
+                                        try? modelContext.save()
+                                        
+                                        // Run cleanup
+                                        cleanupOrphanedData()
+                                    }
                                 }
                             }
                         }
+                        .padding(.horizontal)
                     }
-                    .padding(.horizontal)
+                    
+                    // Books grid
+                    LazyVGrid(columns: [
+                        GridItem(.flexible()),
+                        GridItem(.flexible())
+                    ], spacing: 20) {
+                        ForEach(filteredBooks) { book in
+                            BookCard(book: book, onDelete: {
+                                if let currentGroup = selectedGroup {
+                                    if let relationshipToDelete = relationships.first(where: { 
+                                        $0.book.id == book.id && $0.group.id == currentGroup.id 
+                                    }) {
+                                        modelContext.delete(relationshipToDelete)
+                                    }
+                                } else {
+                                    relationships.filter { $0.book.id == book.id }.forEach { relationship in
+                                        modelContext.delete(relationship)
+                                    }
+                                    book.cleanupStoredImage()
+                                    modelContext.delete(book)
+                                }
+                            }, currentGroup: selectedGroup)
+                        }
+                    }
+                    .padding()
                 }
-                
-                // Books grid
-                LazyVGrid(columns: [
-                    GridItem(.flexible()),
-                    GridItem(.flexible())
-                ], spacing: 20) {
-                    ForEach(filteredBooks) { book in
-                        BookCard(book: book, onDelete: {
-                            if let currentGroup = selectedGroup {
-                                if let relationshipToDelete = relationships.first(where: { 
-                                    $0.book.id == book.id && $0.group.id == currentGroup.id 
-                                }) {
-                                    modelContext.delete(relationshipToDelete)
-                                }
-                            } else {
-                                relationships.filter { $0.book.id == book.id }.forEach { relationship in
-                                    modelContext.delete(relationship)
-                                }
-                                book.cleanupStoredImage()
-                                modelContext.delete(book)
+                .navigationTitle("") // Hide the default navigation title
+                .toolbar(.hidden, for: .navigationBar)
+                .safeAreaInset(edge: .top) {
+                    HStack {
+                        Text("Bookshelf")
+                            .font(.largeTitle)
+                            .bold()
+                        Spacer()
+                        HStack(spacing: 32) {
+                            Button {
+                                showingAddGroup = true
+                            } label: {
+                                Image(systemName: "folder.badge.plus")
+                                    .font(.system(size: 24))
+                                    .frame(width: 44, height: 44)
+                                    .foregroundColor(.purple)
                             }
-                        }, currentGroup: selectedGroup)
+                            Button {
+                                showingAddBook = true
+                            } label: {
+                                Image(systemName: "plus")
+                                    .font(.system(size: 24))
+                                    .frame(width: 44, height: 44)
+                                    .foregroundColor(.purple)
+                            }
+                        }
+                        .padding(.leading)
+                    }
+                    .padding()
+                    .background(Color(UIColor.systemBackground).opacity(0.9)) // Background color for the header
+                    .shadow(radius: 2) // Optional shadow for depth
+                }
+                .sheet(isPresented: $showingAddBook) {
+                    BookAddView()
+                }
+                .sheet(isPresented: $showingAddGroup) {
+                    BookGroupAddView()
+                }
+                .sheet(item: $bookForGroupSelection) { book in
+                    BookGroupSelectionView(book: book)
+                }
+                .sheet(item: $bookForEditing) { book in
+                    BookEditView(book: book) { savedBook, success in
+                        if success {
+                            // Handle saving the book in BookshelfView
+                            do {
+                                modelContext.insert(savedBook) // Insert the book into the context
+                                try modelContext.save() // Save the context
+                                print("Successfully saved book: \(savedBook.title)")
+                                bookForEditing = nil
+                            } catch {
+                                print("Failed to save book: \(error.localizedDescription)")
+                            }
+                        } else {
+                            // Handle the case where a duplicate was found
+                            print("Duplicate book found, not saving.")
+                        }
                     }
                 }
-                .padding()
             }
-            .navigationTitle("Bookshelf")
-            .toolbar(.hidden, for: .navigationBar)
-            .safeAreaInset(edge: .top) {
-                HStack {
-                    Text("Bookshelf")
-                        .font(.largeTitle)
-                        .bold()
-                    Spacer()
-                    HStack(spacing: 32) {
-                        Button {
-                            showingAddGroup = true
-                        } label: {
-                            Image(systemName: "folder.badge.plus")
-                                .font(.system(size: 24))
-                                .frame(width: 44, height: 44)
-                        }
-                        Button {
-                            showingAddBook = true
-                        } label: {
-                            Image(systemName: "plus")
-                                .font(.system(size: 24))
-                                .frame(width: 44, height: 44)
-                        }
-                    }
-                    .padding(.leading)
+            .onAppear {
+                print("Books in context:")
+                for book in books {
+                    print("Book: \(book.title ?? "Unknown Title")")
                 }
-                .padding()
+                cleanupOrphanedData()
             }
-            .sheet(isPresented: $showingAddBook) {
-                BookAddView()
-            }
-            .sheet(isPresented: $showingAddGroup) {
-                BookGroupAddView()
-            }
-            .sheet(item: $bookForGroupSelection) { book in
-                BookGroupSelectionView(book: book)
-            }
-            .sheet(item: $bookForEditing) { book in
-                BookEditView(book: book)
-            }
-        }
-        .onAppear {
-            cleanupOrphanedData()
         }
     }
     
@@ -301,7 +326,7 @@ private func createPreviewData() async {
                 book: book,
                 startPage: 1,
                 endPage: book.currentPage,
-                duration: Int.random(in: 30...180),
+                duration: Int.random(in: 600...3600),
                 date: Date().addingTimeInterval(-Double.random(in: 0...86400))
             )
             context.insert(session)

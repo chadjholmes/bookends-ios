@@ -8,19 +8,32 @@ struct BookEditView: View {
     @State private var showEditionsView = false
     @Query private var allGroups: [BookGroup]
     @Query private var relationships: [BookGroupRelationship]
+    @Query private var existingBooks: [Book]
+    var book: Book
+    var onSave: (Book, Bool) -> Void // Closure for save handling
 
-    init(book: Book? = nil) {
-        _viewModel = StateObject(wrappedValue: BookEditViewModel(book: book))
+    init(book: Book, onSave: @escaping (Book, Bool) -> Void) {
+        self.book = book
+        self._viewModel = StateObject(wrappedValue: BookEditViewModel(book: book))
+        self.onSave = onSave
     }
 
     var body: some View {
         NavigationStack {
-            Form {
-                CoverImageSection(viewModel: viewModel, showEditionsView: $showEditionsView)
-                GroupsSection(allGroups: allGroups, isBookInGroup: isBookInGroup, toggleGroup: toggleGroup)
-                BookDetailsSection(viewModel: viewModel)
+            ScrollView {
+                VStack {
+                    CoverImageSection(viewModel: viewModel, showEditionsView: $showEditionsView)
+                    BookPageSelector(currentPage: Binding(
+                        get: { Int(viewModel.currentPage) ?? 0 },
+                        set: { viewModel.currentPage = String($0) }
+                    ), totalPages: Int(viewModel.totalPages) ?? 0)
+                    GroupsSection(allGroups: allGroups.sorted(by: { $0.name < $1.name }),
+                                  isBookInGroup: isBookInGroup,
+                                  toggleGroup: toggleGroup)
+                    BookDetailsSection(viewModel: viewModel)
+                }
+                .padding()
             }
-            .padding()
             .navigationTitle(viewModel.book == nil ? "Add Book" : "Edit Book")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -34,6 +47,7 @@ struct BookEditView: View {
                         saveBook()
                     }
                     .disabled(!canSave)
+                    .foregroundColor(.purple) // Match button color with BookView
                 }
             }
             .alert(isPresented: $viewModel.showAlert) {
@@ -55,6 +69,7 @@ struct BookEditView: View {
                             viewModel.title = edition.title.isEmpty ? selectedBook.title : edition.title
                             viewModel.author = selectedBook.author // Keep existing author
                             viewModel.totalPages = edition.number_of_pages != nil ? String(edition.number_of_pages!) : String(selectedBook.totalPages)
+                            viewModel.currentPage = "0"
                             viewModel.isbn = edition.displayISBN ?? selectedBook.isbn ?? ""
                             viewModel.publisher = edition.displayPublisher ?? selectedBook.publisher ?? ""
                             viewModel.publishYear = edition.publish_date != nil ? 
@@ -86,12 +101,19 @@ struct BookEditView: View {
     }
 
     private func saveBook() {
-        // Check if we are editing an existing book or creating a new one
+        if isBookDuplicate(title: viewModel.title, isbn: viewModel.isbn) {
+            viewModel.alertMessage = "A book with the same title or ISBN already exists"
+            viewModel.showAlert = true
+            onSave(book, false) // Indicate failure due to duplicate
+            return
+        }
+
         if let book = viewModel.book {
             // Update the existing book
             book.title = viewModel.title
             book.author = viewModel.author
             book.totalPages = Int(viewModel.totalPages) ?? 0
+            book.currentPage = Int(viewModel.currentPage) ?? 0
             book.isbn = viewModel.isbn
             book.publisher = viewModel.publisher
             book.publishYear = Int(viewModel.publishYear) ?? nil
@@ -99,8 +121,8 @@ struct BookEditView: View {
             book.notes = viewModel.notes
             book.coverImageData = viewModel.selectedImage?.pngData() ?? book.coverImageData
             
-            // Group relationships are managed separately through BookGroupRelationship
-            print("Saving book: \(book.title)")
+            print("Updating book: \(book.title)")
+            onSave(book, true) // Indicate success
         } else {
             // Create a new book
             let newBook = Book(
@@ -109,24 +131,21 @@ struct BookEditView: View {
                 genre: viewModel.genre,
                 notes: viewModel.notes,
                 totalPages: Int(viewModel.totalPages) ?? 0,
-                isbn: viewModel.isbn,
+                isbn: viewModel.isbn, 
                 publisher: viewModel.publisher,
                 publishYear: Int(viewModel.publishYear) ?? nil,
+                currentPage: Int(viewModel.currentPage) ?? 0,
                 externalReference: [:]
+               
             )
-            modelContext.insert(newBook)
-            viewModel.book = newBook  // Set the book reference
+            print("Creating new book: \(newBook.title)")
+            onSave(newBook, true) // Indicate success
         }
-        
-        // Save the context
-        do {
-            try modelContext.save()
-            print("Successfully saved book")
-            dismiss()
-        } catch {
-            print("Failed to save: \(error)")
-            viewModel.alertMessage = "Failed to save the book. Please try again."
-            viewModel.showAlert = true
+    }
+
+    private func isBookDuplicate(title: String, isbn: String?) -> Bool {
+        return existingBooks.contains { existingBook in
+            (existingBook.title == title || existingBook.isbn == isbn) && existingBook.id != book.id
         }
     }
 

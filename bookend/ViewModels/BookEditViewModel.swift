@@ -6,6 +6,7 @@ class BookEditViewModel: ObservableObject {
     @Published var title: String
     @Published var author: String
     @Published var totalPages: String
+    @Published var currentPage: String
     @Published var isbn: String
     @Published var publisher: String
     @Published var publishYear: String
@@ -23,6 +24,7 @@ class BookEditViewModel: ObservableObject {
         self.title = book?.title ?? ""
         self.author = book?.author ?? ""
         self.totalPages = book?.totalPages != nil ? String(book!.totalPages) : ""
+        self.currentPage = book?.currentPage != nil ? String(book!.currentPage) : "0"
         self.isbn = book?.isbn ?? ""
         self.publisher = book?.publisher ?? ""
         self.publishYear = book?.publishYear != nil ? String(book!.publishYear!) : ""
@@ -131,6 +133,7 @@ class BookEditViewModel: ObservableObject {
         self.title = book.title
         self.author = book.author
         self.totalPages = String(book.totalPages)
+        self.currentPage = String(book.currentPage)
         self.isbn = book.isbn ?? ""
         self.publisher = book.publisher ?? ""
         self.publishYear = book.publishYear != nil ? String(book.publishYear!) : ""

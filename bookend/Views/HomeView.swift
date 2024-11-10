@@ -15,7 +15,7 @@ struct HomeView: View {
             
             ScrollView {
                 VStack(spacing: screenHeight * 0.025) {
-                    Text("Bookends📚")
+                    Text("Bookends")
                         .font(.system(size: screenWidth * 0.08))
                         .bold()
                         .frame(maxWidth: screenWidth, alignment: .leading)
@@ -150,7 +150,7 @@ private struct BookCarousel: View {
             book: book,
             startPage: 1,
             endPage: 20,
-            duration: 30,
+            duration: 1800,
             date: Date()
         )
         context.insert(session)

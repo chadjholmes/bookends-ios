@@ -16,48 +16,20 @@ struct BookAddView: View {
     @State private var selectedImage: UIImage?
     @State private var selectedBook: OpenLibraryBook?
     @State private var showingEditionPicker = false
+    @State private var showingEditBook = false
     @State private var selectedGroups: Set<BookGroup> = []
     @State private var bookForEditing: Book?
-    
+
+    @State private var showToast = false
+    @State private var newBook: Book? // Temporary book object
+    @State private var addAnotherBook = false
+
     var body: some View {
         NavigationView {
             Form {
                 Section(header: Text("Search")) {
                     Button("Search OpenLibrary") {
                         showingSearch = true
-                    }
-                }
-                
-                if bookForEditing == nil {
-                    Section(header: Text("Book Details")) {
-                        TextField("Title", text: $title)
-                        TextField("Author", text: $author)
-                        TextField("Total Pages", text: $totalPages)
-                            .keyboardType(.numberPad)
-                    }
-                    
-                    Section(header: Text("Groups")) {
-                        ForEach(allGroups) { group in
-                            Toggle(isOn: Binding(
-                                get: { selectedGroups.contains(group) },
-                                set: { isSelected in
-                                    if isSelected {
-                                        selectedGroups.insert(group)
-                                    } else {
-                                        selectedGroups.remove(group)
-                                    }
-                                }
-                            )) {
-                                VStack(alignment: .leading) {
-                                    Text(group.name)
-                                    if let description = group.groupDescription {
-                                        Text(description)
-                                            .font(.caption)
-                                            .foregroundStyle(.secondary)
-                                    }
-                                }
-                            }
-                        }
                     }
                 }
             }
@@ -67,9 +39,24 @@ struct BookAddView: View {
                     dismiss()
                 },
                 trailing: Button("Save") {
-                    saveBook()
+                    saveBook() // Save the book only when confirmed
                 }
-                .disabled(bookForEditing == nil && (title.isEmpty || author.isEmpty || totalPages.isEmpty))
+                .disabled(newBook == nil || (title.isEmpty || author.isEmpty || totalPages.isEmpty))
+            )
+            .overlay(
+                Group {
+                    if showToast {
+                        BookAddedToast(
+                            message: "Book Successfully Added",
+                            onDismiss: {
+                                showToast = false // Hide the toast
+                            },
+                            onReturnToBookshelf: {
+                                dismiss() // Navigate back to the bookshelf
+                            }
+                        )
+                    }
+                }
             )
             .sheet(isPresented: $showingSearch) {
                 BookSearchView(
@@ -82,13 +69,31 @@ struct BookAddView: View {
                 )
             }
             .sheet(item: $bookForEditing) { book in
-                BookEditView(book: book)
+                BookEditView(book: book) { savedBook, success in
+                    if success {
+                        // Handle saving the book in BookAddView
+                        do {
+                            modelContext.insert(savedBook) // Insert the book into the context
+                            try modelContext.save() // Save the context
+                            print("Successfully saved book: \(savedBook.title)")
+                            // Reset the bookForEditing state to close the sheet
+                            bookForEditing = nil
+                            showToast = true
+                        } catch {
+                            print("Failed to save book: \(error.localizedDescription)")
+                        }
+                    } else {
+                        // Handle the case where a duplicate was found
+                        print("Duplicate book found, not saving.")
+                    }
+                }
             }
         }
     }
     
     private func handleBookSelection(_ book: OpenLibraryBook) {
-        let newBook = Book(
+        // Create a temporary book object
+        newBook = Book(
             title: book.title,
             author: book.authorDisplay,
             totalPages: book.number_of_pages_median ?? 0,
@@ -103,19 +108,29 @@ struct BookAddView: View {
                 if let url = URL(string: coverUrl),
                    let (data, _) = try? await URLSession.shared.data(from: url),
                    let image = UIImage(data: data) {
-                    try? newBook.saveCoverImage(image)
+                    try? newBook?.saveCoverImage(image)
                 }
             }
         }
         
-        modelContext.insert(newBook)
-        
+        // Set the selected book for editing
         bookForEditing = newBook
         showingSearch = false
+        showingEditBook = true
+        searchQuery = ""
     }
     
     private func saveBook() {
-        // Remove or modify saveBook() since we're now handling it in the EditView
+        guard let bookToSave = newBook else { return }
+        
+        // Insert the book into the context
+        modelContext.insert(bookToSave)
+        
+        // Optionally, show a toast or confirmation
+        showToast = true
+        
+        // Dismiss the view
+        dismiss()
     }
     
     private func handleEditionSelection(_ edition: OpenLibraryEdition) {
@@ -155,4 +170,4 @@ struct BookAddView: View {
 
 #Preview {
     BookAddView()
-} 
+}

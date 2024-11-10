@@ -72,7 +72,7 @@ public final class ReadingGoal {
             case .pages:
                 return sum + (session.endPage - session.startPage)
             case .minutes:
-                return sum + session.duration
+                return sum + Int(ceil(Double(session.duration) / 60.0))
             case .books:
                 return sum + (session.endPage == session.book?.totalPages ? 1 : 0)
             }
@@ -105,7 +105,7 @@ public final class ReadingGoal {
             case .pages:
                 result += (session.endPage - session.startPage)
             case .minutes:
-                result += session.duration
+                result += Int(ceil(Double(session.duration) / 60.0))
             case .books:
                 result += (session.endPage == session.book?.totalPages ? 1 : 0)
             }

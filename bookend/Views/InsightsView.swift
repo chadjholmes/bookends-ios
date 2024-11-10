@@ -535,7 +535,7 @@ private struct InsightsView_Preview {
                 book: books[0],
                 startPage: 380,
                 endPage: 412,
-                duration: 45,
+                duration: 45*60,
                 date: now
             ),
             
@@ -544,7 +544,7 @@ private struct InsightsView_Preview {
                 book: books[1],
                 startPage: 250,
                 endPage: 280,
-                duration: 60,
+                duration: 60*60,
                 date: calendar.date(byAdding: .day, value: -1, to: now)!
             ),
             
@@ -553,7 +553,7 @@ private struct InsightsView_Preview {
                 book: books[1],
                 startPage: 200,
                 endPage: 250,
-                duration: 90,
+                duration: 90*60,
                 date: calendar.date(byAdding: .day, value: -3, to: now)!
             ),
             
@@ -562,7 +562,7 @@ private struct InsightsView_Preview {
                 book: books[2],
                 startPage: 200,
                 endPage: 255,
-                duration: 120,
+                duration: 120*60,
                 date: calendar.date(byAdding: .day, value: -4, to: now)!
             ),
             
@@ -571,7 +571,7 @@ private struct InsightsView_Preview {
                 book: books[3],
                 startPage: 100,
                 endPage: 123,
-                duration: 30,
+                duration: 30*60,
                 date: calendar.date(byAdding: .day, value: -5, to: now)!
             ),
             
@@ -580,7 +580,7 @@ private struct InsightsView_Preview {
                 book: books[2],
                 startPage: 150,
                 endPage: 200,
-                duration: 75,
+                duration: 75*60,
                 date: calendar.date(byAdding: .day, value: -7, to: now)!
             )
         ]

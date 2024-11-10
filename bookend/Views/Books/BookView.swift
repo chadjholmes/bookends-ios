@@ -11,7 +11,8 @@ struct BookView: View {
     @State private var selectedBook: Book?
     @State private var showingClearSessionsAlert = false
     @State private var isSessionsExpanded = false
-    @State private var showingCurrentPagePicker = false // State for showing the current page picker
+    @State private var showingCurrentPagePicker = false
+    @State private var showToast = false
     
     // State variable to hold reading sessions
     @State private var readingSessions: [ReadingSession] = []
@@ -23,39 +24,35 @@ struct BookView: View {
     
     var body: some View {
         ScrollView {
-            VStack(spacing: 20) {
+            VStack(spacing: 40) {
                 HStack {
                     BookCover(book: book, currentPage: currentPage, width: 180, height: 270, showSubtitles: false)
                     BookDetails(book: book)
                 }
-                 // Add Reading Session Button
-                Button(action: {
-                    showingReadingSession = true
-                }) {
-                    Label("Add Reading Session", systemImage: "book.closed")
-                        .frame(maxWidth: .infinity) // Ensure full width
-                        .padding()
-                        .background(Color.purple)
-                        .foregroundColor(.white)
-                        .cornerRadius(10)
-                        .padding(.bottom, 40)
-                }
-                .padding(.horizontal)
-                // Current Page Display with Button
-                Button(action: {
-                    showingCurrentPagePicker = true
-                }) {
-                    HStack {
-                        Text("Current Page: \(currentPage) of \(book.totalPages)")
-                            .font(.headline)
-                        Spacer()
-                        Image(systemName: "chevron.right") // Arrow indicating more options
+                HStack {
+                    NavigationLink(destination: LiveSessionView(book: book, onSessionSaved: {
+                        showToast = true
+                    })) {
+                        Text("Record Session")
+                            .frame(maxWidth: .infinity) // Ensure full width
+                            .padding()
+                            .background(Color.purple)
+                            .foregroundColor(.white)
+                            .cornerRadius(10)
                     }
-                    .padding()
-                    .background(Color(.systemGray6))
-                    .cornerRadius(8)
+                    .frame(maxWidth: .infinity)
+                    Button(action: {
+                        showingReadingSession = true
+                    }) {
+                        Text("Enter Session")
+                            .frame(maxWidth: .infinity) // Ensure full width
+                            .padding()
+                            .background(Color.indigo)
+                            .foregroundColor(.white)
+                            .cornerRadius(10)
+                    }
                 }
-                
+                // Current Page Display with Slider
                 // Accordion section for reading sessions (moved below Current Page)
                 DisclosureGroup("Reading Sessions (\(readingSessions.count))", isExpanded: $isSessionsExpanded) {
                     if !readingSessions.isEmpty {
@@ -68,11 +65,13 @@ struct BookView: View {
                     }
                 }
                 .padding()
+                .accentColor(.purple)
                 .background(Color(.systemGray6))
-                .cornerRadius(8)
+                .cornerRadius(10)
                 .frame(maxWidth: .infinity) // Ensure full width to match button
             }
             .padding(.horizontal) // Add horizontal padding to the entire VStack
+            .toast(isPresented: $showToast, message: "Session saved successfully!")
         }
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -81,6 +80,7 @@ struct BookView: View {
                     isEditing = true
                     selectedBook = book
                 }
+                .foregroundColor(.purple)
             }
             ToolbarItem(placement: .bottomBar) {
                 Button("Clear Reading Sessions") {
@@ -107,7 +107,22 @@ struct BookView: View {
         }
         .sheet(isPresented: $isEditing) {
             NavigationView {
-                BookEditView(book: book)
+                BookEditView(book: book) { savedBook, success in
+                    if success {
+                        // Handle saving the book in BookView
+                        do {
+                            modelContext.insert(savedBook) // Insert the book into the context
+                            try modelContext.save() // Save the context
+                            print("Successfully saved book: \(savedBook.title)")
+                            isEditing = false
+                        } catch {
+                            print("Failed to save book: \(error.localizedDescription)")
+                        }
+                    } else {
+                        // Handle the case where a duplicate was found
+                        print("Duplicate book found, not saving.")
+                    }
+                }
             }
             .interactiveDismissDisabled()
         }
@@ -121,29 +136,6 @@ struct BookView: View {
         }
         .onAppear {
             fetchReadingSessions() // Fetch reading sessions when the view appears
-        }
-        .sheet(isPresented: $showingCurrentPagePicker) {
-            NavigationView {
-                Picker("Select Current Page", selection: $currentPage) {
-                    ForEach(1...book.totalPages, id: \.self) { page in
-                        Text("\(page)").tag(page)
-                    }
-                }
-                .pickerStyle(WheelPickerStyle())
-                .navigationTitle("Select Current Page")
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .confirmationAction) {
-                        Button("Done") {
-                            // Update the book's currentPage when done
-                            book.currentPage = currentPage // Ensure this line updates the Book model
-                            print("Current page updated to: \(book.currentPage)") // Log the updated current page
-                            showingCurrentPagePicker = false
-                        }
-                    }
-                }
-            }
-            .presentationDetents([.height(250)]) // Optional: Adjust height as needed
         }
     }
     
