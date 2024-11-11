@@ -182,7 +182,6 @@ struct BookshelfView: View {
                     }
                     .padding()
                     .background(Color(UIColor.systemBackground).opacity(0.9)) // Background color for the header
-                    .shadow(radius: 2) // Optional shadow for depth
                 }
                 .sheet(isPresented: $showingAddBook) {
                     BookAddView()

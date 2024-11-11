@@ -6,7 +6,20 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		EB01C6F52CE13BAE00E05AC2 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EB01C6802CE133F600E05AC2 /* WidgetKit.framework */; platformFilters = (ios, maccatalyst, macos, watchos, ); };
+		EB01C6F62CE13BAE00E05AC2 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EB01C6822CE133F700E05AC2 /* SwiftUI.framework */; platformFilters = (ios, maccatalyst, macos, tvos, watchos, xros, ); };
+		EB01C7032CE13BB000E05AC2 /* ReadingSessionExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = EB01C6F42CE13BAE00E05AC2 /* ReadingSessionExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
+		EB01C7012CE13BB000E05AC2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = EB24F8F22CD54CC90027FD0E /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = EB01C6F32CE13BAE00E05AC2;
+			remoteInfo = ReadingSessionExtension;
+		};
 		EB24F90E2CD54CCB0027FD0E /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = EB24F8F22CD54CC90027FD0E /* Project object */;
@@ -23,7 +36,34 @@
 		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		EB01C6992CE133F900E05AC2 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				EB01C7032CE13BB000E05AC2 /* ReadingSessionExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		EB01C7372CE1433300E05AC2 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		EB01C6802CE133F600E05AC2 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		EB01C6822CE133F700E05AC2 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		EB01C6F42CE13BAE00E05AC2 /* ReadingSessionExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ReadingSessionExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		EB240DD92CD54D600027FD0E /* RNImagePicker.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = RNImagePicker.xcodeproj; sourceTree = "<group>"; };
 		EB240EFE2CD54D600027FD0E /* RNReanimated.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = RNReanimated.xcodeproj; sourceTree = "<group>"; };
 		EB2422AA2CD54D650027FD0E /* RNCPicker.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = RNCPicker.xcodeproj; sourceTree = "<group>"; };
@@ -81,9 +121,24 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		EB01C7072CE13BB000E05AC2 /* Exceptions for "ReadingSession" folder in "ReadingSessionExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = EB01C6F32CE13BAE00E05AC2 /* ReadingSessionExtension */;
+		};
+		EB01C7592CE1442000E05AC2 /* Exceptions for "bookend" folder in "ReadingSessionExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Views/Sessions/ReadingSessionLiveAttributes.swift,
+			);
+			target = EB01C6F32CE13BAE00E05AC2 /* ReadingSessionExtension */;
+		};
 		EB83F3EA2CD5ECEC00B0EC47 /* Exceptions for "bookend" folder in "bookend" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				Info.plist,
 				"Preview Content/Preview Assets.xcassets",
 			);
 			target = EB24F8F92CD54CC90027FD0E /* bookend */;
@@ -91,10 +146,24 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		EB01C6F72CE13BAE00E05AC2 /* ReadingSession */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				EB01C7072CE13BB000E05AC2 /* Exceptions for "ReadingSession" folder in "ReadingSessionExtension" target */,
+			);
+			path = ReadingSession;
+			sourceTree = "<group>";
+		};
+		EB01C7302CE1433300E05AC2 /* ReadingSessionSharedTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = ReadingSessionSharedTests;
+			sourceTree = "<group>";
+		};
 		EB24F8FC2CD54CC90027FD0E /* bookend */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				EB83F3EA2CD5ECEC00B0EC47 /* Exceptions for "bookend" folder in "bookend" target */,
+				EB01C7592CE1442000E05AC2 /* Exceptions for "bookend" folder in "ReadingSessionExtension" target */,
 			);
 			path = bookend;
 			sourceTree = "<group>";
@@ -112,6 +181,15 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		EB01C6F12CE13BAE00E05AC2 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				EB01C6F62CE13BAE00E05AC2 /* SwiftUI.framework in Frameworks */,
+				EB01C6F52CE13BAE00E05AC2 /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		EB24F8F72CD54CC90027FD0E /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -136,6 +214,15 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		EB01C67F2CE133F600E05AC2 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				EB01C6802CE133F600E05AC2 /* WidgetKit.framework */,
+				EB01C6822CE133F700E05AC2 /* SwiftUI.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		EB2413872CD54D600027FD0E /* Products */ = {
 			isa = PBXGroup;
 			children = (
@@ -259,6 +346,9 @@
 				EB24F8FC2CD54CC90027FD0E /* bookend */,
 				EB24F9102CD54CCB0027FD0E /* bookendTests */,
 				EB24F91A2CD54CCB0027FD0E /* bookendUITests */,
+				EB01C6F72CE13BAE00E05AC2 /* ReadingSession */,
+				EB01C7302CE1433300E05AC2 /* ReadingSessionSharedTests */,
+				EB01C67F2CE133F600E05AC2 /* Frameworks */,
 				EB24F8FB2CD54CC90027FD0E /* Products */,
 			);
 			sourceTree = "<group>";
@@ -269,6 +359,7 @@
 				EB24F8FA2CD54CC90027FD0E /* bookend.app */,
 				EB24F90D2CD54CCB0027FD0E /* bookendTests.xctest */,
 				EB24F9172CD54CCB0027FD0E /* bookendUITests.xctest */,
+				EB01C6F42CE13BAE00E05AC2 /* ReadingSessionExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -510,6 +601,28 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		EB01C6F32CE13BAE00E05AC2 /* ReadingSessionExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = EB01C7042CE13BB000E05AC2 /* Build configuration list for PBXNativeTarget "ReadingSessionExtension" */;
+			buildPhases = (
+				EB01C6F02CE13BAE00E05AC2 /* Sources */,
+				EB01C6F12CE13BAE00E05AC2 /* Frameworks */,
+				EB01C6F22CE13BAE00E05AC2 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				EB01C6F72CE13BAE00E05AC2 /* ReadingSession */,
+			);
+			name = ReadingSessionExtension;
+			packageProductDependencies = (
+			);
+			productName = ReadingSessionExtension;
+			productReference = EB01C6F42CE13BAE00E05AC2 /* ReadingSessionExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		EB24F8F92CD54CC90027FD0E /* bookend */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = EB24F9212CD54CCB0027FD0E /* Build configuration list for PBXNativeTarget "bookend" */;
@@ -517,10 +630,13 @@
 				EB24F8F62CD54CC90027FD0E /* Sources */,
 				EB24F8F72CD54CC90027FD0E /* Frameworks */,
 				EB24F8F82CD54CC90027FD0E /* Resources */,
+				EB01C6992CE133F900E05AC2 /* Embed Foundation Extensions */,
+				EB01C7372CE1433300E05AC2 /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				EB01C7022CE13BB000E05AC2 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				EB24F8FC2CD54CC90027FD0E /* bookend */,
@@ -588,6 +704,9 @@
 				LastSwiftUpdateCheck = 1610;
 				LastUpgradeCheck = 1610;
 				TargetAttributes = {
+					EB01C6F32CE13BAE00E05AC2 = {
+						CreatedOnToolsVersion = 16.1;
+					};
 					EB24F8F92CD54CC90027FD0E = {
 						CreatedOnToolsVersion = 16.1;
 					};
@@ -860,11 +979,19 @@
 				EB24F8F92CD54CC90027FD0E /* bookend */,
 				EB24F90C2CD54CCB0027FD0E /* bookendTests */,
 				EB24F9162CD54CCB0027FD0E /* bookendUITests */,
+				EB01C6F32CE13BAE00E05AC2 /* ReadingSessionExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		EB01C6F22CE13BAE00E05AC2 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		EB24F8F82CD54CC90027FD0E /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -889,6 +1016,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		EB01C6F02CE13BAE00E05AC2 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		EB24F8F62CD54CC90027FD0E /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -913,6 +1047,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		EB01C7022CE13BB000E05AC2 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = EB01C6F32CE13BAE00E05AC2 /* ReadingSessionExtension */;
+			targetProxy = EB01C7012CE13BB000E05AC2 /* PBXContainerItemProxy */;
+		};
 		EB24F90F2CD54CCB0027FD0E /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = EB24F8F92CD54CC90027FD0E /* bookend */;
@@ -926,6 +1065,65 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		EB01C7052CE13BB000E05AC2 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = SLSVB2XXAV;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ReadingSession/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ReadingSession;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = bookend.bookend.beta1.ReadingSession;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		EB01C7062CE13BB000E05AC2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = SLSVB2XXAV;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ReadingSession/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ReadingSession;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = bookend.bookend.beta1.ReadingSession;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 		EB24F91F2CD54CCB0027FD0E /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -1078,10 +1276,11 @@
 				DEVELOPMENT_TEAM = SLSVB2XXAV;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "";
+				INFOPLIST_FILE = bookend/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Bookends;
 				INFOPLIST_KEY_CFBundleIconName = AppIcon;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.books";
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
@@ -1129,9 +1328,10 @@
 				DEVELOPMENT_TEAM = SLSVB2XXAV;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "";
+				INFOPLIST_FILE = bookend/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Bookends;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.books";
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
@@ -1280,6 +1480,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		EB01C7042CE13BB000E05AC2 /* Build configuration list for PBXNativeTarget "ReadingSessionExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				EB01C7052CE13BB000E05AC2 /* Debug */,
+				EB01C7062CE13BB000E05AC2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		EB24F8F52CD54CC90027FD0E /* Build configuration list for PBXProject "bookend" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

@@ -52,6 +52,17 @@
                ReferencedContainer = "container:bookend.xcodeproj">
             </BuildableReference>
          </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "EB01C7292CE1433300E05AC2"
+               BuildableName = "ReadingSessionSharedTests.xctest"
+               BlueprintName = "ReadingSessionSharedTests"
+               ReferencedContainer = "container:bookend.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction

@@ -85,7 +85,7 @@ struct QuickStatsCard: View {
     }
     
     var totalReadingTime: Int {
-        sessions.reduce(0) { $0 + $1.duration }
+        (( sessions.reduce(0) { $0 + $1.duration } ) / 60)
     }
     
     var body: some View {
@@ -247,9 +247,10 @@ struct ReadingTimeCard: View {
             let dayStart = calendar.startOfDay(for: date)
             
             // Find sessions for this day
-            let dayMinutes = sessions
+            var dayMinutes = sessions
                 .filter { calendar.isDate($0.date, inSameDayAs: dayStart) }
                 .reduce(0) { $0 + $1.duration }
+            dayMinutes = (dayMinutes / 60)
             
             result.append((date, dayMinutes))
         }

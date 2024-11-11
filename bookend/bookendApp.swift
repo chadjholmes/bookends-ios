@@ -7,10 +7,14 @@
 
 import SwiftUI
 import SwiftData
+import ActivityKit
+import Dispatch
 
 @main
 struct BookendApp: App {
     let modelContainer: ModelContainer
+    @Environment(\.scenePhase) private var scenePhase
+    let semaphore = DispatchSemaphore(value: 0)
     
     init() {
         do {
@@ -48,6 +52,23 @@ struct BookendApp: App {
             LandingView()
                 .modelContainer(modelContainer)
                 .accentColor(.purple)
+                .onDisappear {
+                    Task.detached {
+                        for activity in Activity<ReadingSessionAttributes>.activities {
+                            do {
+                                await activity.end(dismissalPolicy: .immediate)
+                            } catch {
+                                print("Error ending activity: \(error.localizedDescription)")
+                            }
+                        }
+                        print("✅ All live activities ended.")
+                        semaphore.signal()
+                    }
+                    semaphore.wait() // Wait for the signal after starting the task
+                }
+            
         }
+        
+        
     }
-} 
+}

@@ -39,5 +39,7 @@
 	<string>17.0</string>
 	<key>MinimumOSVersion</key>
 	<string>17.0</string>
+	<key>NSSupportsLiveActivities</key>
+	<true/>
 </dict>
 </plist>
