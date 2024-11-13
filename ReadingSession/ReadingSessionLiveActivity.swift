@@ -114,17 +114,15 @@ public struct ReadingSessionLiveActivity: Widget {
             return DynamicIsland {
                 // Expanded UI goes here.  Compose the expanded UI through
                 // various regions, like leading/trailing/center/bottom
-                DynamicIslandExpandedRegion(.leading) {
-                    HStack() {
-                        if let coverImageData = context.attributes.coverImageData,
-                           let uiImage = UIImage(data: coverImageData) {
-                            Image(uiImage: uiImage)
-                                .resizable()
-                                .scaledToFit()
-                                .frame(height: 65)
-                                .cornerRadius(10)
-                                .padding(.leading, 5)
-                        }
+                DynamicIslandExpandedRegion(.leading, priority: 10) {
+                    if let coverImageData = context.attributes.coverImageData,
+                       let uiImage = UIImage(data: coverImageData) {
+                        Image(uiImage: uiImage)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(height: 65)
+                            .cornerRadius(10)
+                            .padding(.leading, 5)
                     }
                 }
                 DynamicIslandExpandedRegion(.trailing) {
@@ -178,7 +176,7 @@ public struct ReadingSessionLiveActivity: Widget {
                 }
                 DynamicIslandExpandedRegion(.bottom) {
                     Text("...Session actions coming soon...")
-                        .padding(.top)
+                        .padding()
                         .font(.caption)
                 }
                 DynamicIslandExpandedRegion(.center) {
@@ -199,7 +197,7 @@ public struct ReadingSessionLiveActivity: Widget {
                         }
                         
                     }
-                    .frame(maxWidth: 170, alignment: .leading)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
             compactLeading: {

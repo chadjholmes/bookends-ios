@@ -94,6 +94,7 @@ struct LiveSessionView: View {
 
             // Navigation link to save session
             Button(action: {
+                pauseTimer()
                 showSessionInput = false
                 isReadingSessionActive = true
             }) {
@@ -178,7 +179,7 @@ struct LiveSessionView: View {
             var compressionQuality: CGFloat = 0.5
             while compressionQuality > 0.1 {
                 if let data = resizedImage?.jpegData(compressionQuality: compressionQuality) {
-                    if data.count < 3000 {
+                    if data.count < 2500 {
                         compressedImageData = data
                         print("Final compressed size: \(data.count) bytes with quality: \(compressionQuality)")
                         break
