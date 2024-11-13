@@ -16,6 +16,8 @@ struct LiveSessionView: View {
     @State private var showToast: Bool = false
     @State private var isReadingSessionActive = false
     @State private var liveActivity: Activity<ReadingSessionAttributes>?
+    @State private var sessionStartDate: Date?
+    @State private var sessionLastUpdated: Date?
 
     @Query private var readingGoals: [ReadingGoal]
     @Query private var readingSessions: [ReadingSession]
@@ -35,9 +37,15 @@ struct LiveSessionView: View {
             }
 
             // 2. Stopwatch with pause/resume capability
-            Text(formatElapsedTime(elapsedTime)) // Format elapsed time
-                .font(.largeTitle)
-                .padding()
+            if isRunning {
+                Text(Date(timeIntervalSinceNow: -elapsedTime), style: .timer)
+                    .font(.largeTitle)
+                    .padding()
+            } else {
+                Text(formatElapsedTime(elapsedTime))
+                    .font(.largeTitle)
+                    .padding()
+            }
 
             HStack(spacing: 40) {
                 // Reverse 10 Seconds Button
@@ -48,6 +56,7 @@ struct LiveSessionView: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 40, height: 40) // Adjust size as needed
+                        .foregroundStyle(Color(.purple))
                 }
 
                 // Play/Pause Button
@@ -62,6 +71,7 @@ struct LiveSessionView: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 40, height: 40) // Adjust size as needed
+                        .foregroundStyle(Color(.purple))
                 }
 
                 // Fast Forward 10 Seconds Button
@@ -72,6 +82,7 @@ struct LiveSessionView: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 40, height: 40) // Adjust size as needed
+                        .foregroundStyle(Color(.purple))
                 }
             }
             .padding()
@@ -87,7 +98,13 @@ struct LiveSessionView: View {
                 isReadingSessionActive = true
             }) {
                 Text("Save Session")
+                    .bold()
+                    .padding()
+                    .background(Color.purple)
+                    .cornerRadius(20)
+                    .foregroundColor(.white)
             }
+            .padding(.top, 50)
         }
         .navigationDestination(isPresented: $isReadingSessionActive) {
             ReadingSessionView(
@@ -113,16 +130,22 @@ struct LiveSessionView: View {
     // Timer functions
     private func startTimer() {
         isRunning = true
-        startLiveActivity() // Start Live Activity when the timer starts
-        timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
-            elapsedTime += 1
-            updateLiveActivity() // Update live activity with new elapsed time
+        if sessionStartDate == nil {
+            // First time starting
+            sessionStartDate = Date()
+            sessionLastUpdated = Date()
+            startLiveActivity()
+        } else {
+            // Resuming from pause
+            sessionLastUpdated = Date()
+            updateLiveActivity()
         }
     }
 
     private func pauseTimer() {
         isRunning = false
-        timer?.invalidate()
+        elapsedTime += Date().timeIntervalSince(sessionLastUpdated ?? Date())
+        updateLiveActivity()
     }
 
     // Reverse 10 seconds
@@ -135,32 +158,84 @@ struct LiveSessionView: View {
         elapsedTime += 10 // Increase elapsed time by 10 seconds
     }
 
-    // Custom function to format elapsed time
-    private func formatElapsedTime(_ time: TimeInterval) -> String {
-        let hours = Int(time) / 3600
-        let minutes = (Int(time) % 3600) / 60
-        let seconds = Int(time) % 60
-        
-        if hours > 0 {
-            return String(format: "%02d:%02d:%02d", hours, minutes, seconds) // HH:mm:ss
-        } else {
-            return String(format: "%02d:%02d", minutes, seconds) // mm:ss
-        }
-    }
 
     // Timer functions
     private func startLiveActivity() {
-        let attributes = ReadingSessionAttributes(title: book.title, author: book.author)
+        // Process and scale down the cover image
+        var compressedImageData: Data? = nil
+        
+        if let coverImage = try? book.loadCoverImage() {
+            print("loaded cover for live activity")
+            let maxDimension: CGFloat = 100
+            let scale = min(maxDimension / coverImage.size.width, maxDimension / coverImage.size.height)
+            let newSize = CGSize(width: coverImage.size.width * scale, height: coverImage.size.height * scale)
+            
+            UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
+            coverImage.draw(in: CGRect(origin: .zero, size: newSize))
+            let resizedImage = UIGraphicsGetImageFromCurrentImageContext()
+            UIGraphicsEndImageContext()
+            
+            var compressionQuality: CGFloat = 0.5
+            while compressionQuality > 0.1 {
+                if let data = resizedImage?.jpegData(compressionQuality: compressionQuality) {
+                    if data.count < 3000 {
+                        compressedImageData = data
+                        print("Final compressed size: \(data.count) bytes with quality: \(compressionQuality)")
+                        break
+                    }
+                }
+                compressionQuality -= 0.05
+            }
+        }
+        else {
+            print("could not load cover for live activity")
+            let previewImage = UIImage(named: "book-cover-placeholder") ??
+                              UIImage(systemName: "book.closed.fill") ??
+                              UIImage()
+            
+            let maxDimension: CGFloat = 100
+            let scale = min(maxDimension / previewImage.size.width, maxDimension / previewImage.size.height)
+            let newSize = CGSize(width: previewImage.size.width * scale, height: previewImage.size.height * scale)
+            
+            // Resize image
+            UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
+            previewImage.draw(in: CGRect(origin: .zero, size: newSize))
+            let resizedImage = UIGraphicsGetImageFromCurrentImageContext()
+            UIGraphicsEndImageContext()
+            
+            // Compress with the same logic
+            var compressionQuality: CGFloat = 0.5
+            while compressionQuality > 0.1 {
+                if let data = resizedImage?.jpegData(compressionQuality: compressionQuality) {
+                    if data.count < 3000 {
+                        compressedImageData = data
+                        break
+                    }
+                }
+                compressionQuality -= 0.05
+            }
+        }
+
         let dailyGoal = readingGoals.filter { $0.period == .daily }.first
-        let dailyGoalTarget = (dailyGoal?.target ?? 0) * 60 ?? 0 // Convert minutes to seconds
-        // ^^ SWIFT IS WEIRD
-        print("readingSessions: \(readingSessions)")
-        let existingProgress = dailyGoal?.calculateProgress(from: readingSessions) ?? 0.0
-        print("existingProgress: \(existingProgress)")
-        let initialState = ReadingSessionAttributes.ContentState(
-          elapsedTime: formatElapsedTime(elapsedTime),
-          dailyGoalProgress: (existingProgress + (elapsedTime / Double(dailyGoalTarget)))
+        let dailyGoalTarget = Double(dailyGoal?.target ?? 60) * 60
+
+        let attributes = ReadingSessionAttributes(
+            title: book.title, 
+            author: book.author,
+            coverImageData: compressedImageData,
+            dailyGoalTarget: Int(dailyGoalTarget)
         )
+    
+        let existingProgress = dailyGoal?.calculateProgress(from: readingSessions) ?? 0.0
+        let progress = min(existingProgress + (elapsedTime / dailyGoalTarget), 1.0)
+        
+        let initialState = ReadingSessionAttributes.ContentState(
+            elapsedTime: elapsedTime,
+            dailyGoalProgress: progress,
+            startDate: sessionStartDate ?? Date(),
+            isTimerRunning: true
+        )
+        
         do {
             liveActivity = try Activity<ReadingSessionAttributes>.request(
                 attributes: attributes,
@@ -168,20 +243,27 @@ struct LiveSessionView: View {
                 pushType: nil
             )
         } catch {
-            print("Failed to start live activity: \(error.localizedDescription)")
+            print("Failed to start live activity: \(error)")
+            print("Attributes: \(attributes)")
+            print("Initial State: \(initialState)")
         }
     }
 
     private func updateLiveActivity() {
         guard let activity = liveActivity else { return }
+        
         let dailyGoal = readingGoals.filter { $0.period == .daily }.first
-        let dailyGoalTarget = (dailyGoal?.target ?? 0) * 60 ?? 0 // Convert minutes to seconds
-        // ^^ SWIFT IS WEIRD
+        let dailyGoalTarget = Double(dailyGoal?.target ?? 60) * 60
         let existingProgress = dailyGoal?.calculateProgress(from: readingSessions) ?? 0.0
+        let progress = min(existingProgress + (elapsedTime / dailyGoalTarget), 1.0)
+        
         let updatedState = ReadingSessionAttributes.ContentState(
-          elapsedTime: formatElapsedTime(elapsedTime),
-          dailyGoalProgress: (existingProgress + (elapsedTime / Double(dailyGoalTarget)))
+            elapsedTime: elapsedTime,
+            dailyGoalProgress: progress,
+            startDate: sessionLastUpdated ?? Date(),
+            isTimerRunning: isRunning
         )
+        
         Task {
             await activity.update(using: updatedState)
         }
@@ -194,7 +276,18 @@ struct LiveSessionView: View {
         }
         semaphore.signal() // Signal the semaphore
     }
-    
+
+    func formatElapsedTime(_ time: TimeInterval) -> String {
+        let hours = Int(time) / 3600
+        let minutes = (Int(time) % 3600) / 60
+        let seconds = Int(time) % 60
+        
+        if hours > 0 {
+            return String(format: "%d:%02d:%02d", hours, minutes, seconds) // h:mm:ss
+        } else {
+            return String(format: "%d:%02d", minutes, seconds) // m:ss
+        }
+    }
 }
 
 // Preview

@@ -156,9 +156,6 @@ struct BookshelfView: View {
                 .toolbar(.hidden, for: .navigationBar)
                 .safeAreaInset(edge: .top) {
                     HStack {
-                        Text("Bookshelf")
-                            .font(.largeTitle)
-                            .bold()
                         Spacer()
                         HStack(spacing: 32) {
                             Button {
@@ -180,7 +177,6 @@ struct BookshelfView: View {
                         }
                         .padding(.leading)
                     }
-                    .padding()
                     .background(Color(UIColor.systemBackground).opacity(0.9)) // Background color for the header
                 }
                 .sheet(isPresented: $showingAddBook) {

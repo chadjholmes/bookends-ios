@@ -70,7 +70,6 @@ struct GoalsView: View {
                         }
                 }
             }
-            .navigationTitle("Goals")
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button(action: { showingAddGoal = true }) {

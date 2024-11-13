@@ -14,15 +14,9 @@ struct HomeView: View {
             let screenHeight = UIScreen.main.bounds.height
             
             ScrollView {
-                VStack(spacing: screenHeight * 0.025) {
-                    Text("Bookends")
-                        .font(.system(size: screenWidth * 0.08))
-                        .bold()
-                        .frame(maxWidth: screenWidth, alignment: .leading)
-                        .padding(.horizontal, screenWidth * 0.05)
-                        .padding(.top, screenHeight * 0.07)
-                        .padding(.leading, screenWidth * 0.05)
+                VStack(alignment: .center, spacing: screenHeight * 0.025) {
                     Spacer()
+                        .padding(.bottom, screenHeight * 0.1)
                     GoalRings(goals: goals, sessions: sessions)
                         .frame(maxWidth: screenWidth, alignment: .center)
                         .padding(.horizontal, screenWidth * 0.05)

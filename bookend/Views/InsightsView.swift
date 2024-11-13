@@ -53,7 +53,6 @@ struct InsightsView: View {
                 }
                 .padding()
             }
-            .navigationTitle("Insights")
         }
     }
 }
