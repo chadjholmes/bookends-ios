@@ -177,7 +177,7 @@ public struct ReadingSessionLiveActivity: Widget {
                     }
                 }
                 DynamicIslandExpandedRegion(.bottom) {
-                    Text("...Session Actions Coming Soon...")
+                    Text("...Session actions coming soon...")
                         .padding(.top)
                         .font(.caption)
                 }
