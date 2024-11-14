@@ -227,30 +227,11 @@ public struct ReadingSessionLiveActivity: Widget {
                     let startDate = Date(timeIntervalSinceNow: -elapsedTime)
                     let endDate = startDate.addingTimeInterval(Double(context.attributes.dailyGoalTarget))
                     let dateRange = startDate...endDate
-                    
-                    if context.state.isTimerRunning {
-                        ProgressView(timerInterval: dateRange, countsDown: false)
-                            .tint(.purple)
-                            .progressViewStyle(.circular)
-                            .foregroundStyle(.clear)
-                            .frame(height: 25)
-                            .padding(.leading, 2)
-                            .bold()
-
-                    } else {
-                        ProgressView(value: elapsedTime, total: Double(context.attributes.dailyGoalTarget))
-                            .tint(.purple)
-                            .progressViewStyle(.circular)
-                            .foregroundStyle(.clear)
-                            .frame(height: 25)
-                            .bold()
-                    }
-                    
                     if context.state.isTimerRunning {
                         Text(Date(timeIntervalSinceNow: -getElapsedTime(
                             isTimerRunning: context.state.isTimerRunning,
                             startDate: context.state.startDate,
-                            elapsedTime: context.state.elapsedTime)), 
+                            elapsedTime: context.state.elapsedTime)),
                             style: .timer)
                             .font(.system(size: 12))
                             .bold()
@@ -265,6 +246,22 @@ public struct ReadingSessionLiveActivity: Widget {
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity, alignment: .center)
                             .frame(width: 50, height: 20)
+                    }
+                    if context.state.isTimerRunning {
+                        ProgressView(timerInterval: dateRange, countsDown: false)
+                            .tint(.purple)
+                            .progressViewStyle(.circular)
+                            .foregroundStyle(.clear)
+                            .frame(height: 25)
+                            .bold()
+
+                    } else {
+                        ProgressView(value: elapsedTime, total: Double(context.attributes.dailyGoalTarget))
+                            .tint(.purple)
+                            .progressViewStyle(.circular)
+                            .foregroundStyle(.clear)
+                            .frame(height: 25)
+                            .bold()
                     }
                 }
             } minimal: {
