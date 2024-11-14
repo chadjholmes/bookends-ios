@@ -51,34 +51,37 @@ public struct ReadingSessionLiveActivity: Widget {
                     
                     // Trailing - Progress indicator
                     ZStack(alignment: .center) {
-                        // Background capsule in grey
-                        Capsule()
-                            .stroke(Color.gray, lineWidth: 4)
-                            .frame(width: 80, height: 40)
+                        let elapsedTime = getElapsedTime(
+                            isTimerRunning: context.state.isTimerRunning,
+                            startDate: context.state.startDate,
+                            elapsedTime: context.state.elapsedTime
+                        )
+                        // Create date range from elapsed time
+                        let startDate = Date(timeIntervalSinceNow: -elapsedTime)
+                        let endDate = startDate.addingTimeInterval(Double(context.attributes.dailyGoalTarget))
+                        let dateRange = startDate...endDate
                         
-                        // First progress capsule (0-75%)
-                        Capsule()
-                            .trim(from: 0.25, to: min(0.25 + totalProgress, 1.0))
-                            .stroke(Color.purple, lineWidth: 3)
-                            .frame(width: 80, height: 40)
-                            .rotationEffect(.degrees(180))
+                        if context.state.isTimerRunning {
+                            ProgressView(timerInterval: dateRange, countsDown: false)
+                                .tint(.purple)
+                                .progressViewStyle(.circular)
+                                .foregroundStyle(.clear)
+                                .frame(height: 55)
+                        } else {
+                            ProgressView(value: elapsedTime, total: Double(context.attributes.dailyGoalTarget))
+                                .tint(.purple)
+                                .progressViewStyle(.circular)
+                                .foregroundStyle(.clear)
+                                .frame(height: 55)
+                        }
                         
-                        // Second progress capsule (75-100%)
-                        Capsule()
-                            .trim(from: 0, to: totalProgress > 0.75 ? 
-                                (totalProgress - 0.75) : 0)
-                            .stroke(Color.purple, lineWidth: 3)
-                            .frame(width: 80, height: 40)
-                            .rotationEffect(.degrees(180))
-                        
-                        // Timer text
-                        if(context.state.isTimerRunning) {
+                        if context.state.isTimerRunning {
                             Text(Date(timeIntervalSinceNow: -getElapsedTime(
                                 isTimerRunning: context.state.isTimerRunning,
                                 startDate: context.state.startDate,
                                 elapsedTime: context.state.elapsedTime)), 
                                 style: .timer)
-                                .font(.system(size: 12))
+                                .font(.system(size: 10))
                                 .bold()
                                 .multilineTextAlignment(.center)
                                 .frame(maxWidth: .infinity, alignment: .center)
@@ -87,7 +90,7 @@ public struct ReadingSessionLiveActivity: Widget {
                                 .padding()
                         } else {
                             Text(formatElapsedTime(context.state.elapsedTime))
-                                .font(.system(size: 12))
+                                .font(.system(size: 10))
                                 .bold()
                                 .foregroundColor(.primary)
                                 .frame(maxWidth: .infinity, alignment: .center)
@@ -100,8 +103,6 @@ public struct ReadingSessionLiveActivity: Widget {
             }
             .activityBackgroundTint(Color(uiColor: .systemBackground))
             .activitySystemActionForegroundColor(Color.purple)
-
-
         } dynamicIsland: { context in
             let totalProgress = getTotalProgress(
                 dailyGoalTarget: context.attributes.dailyGoalTarget,
@@ -112,7 +113,7 @@ public struct ReadingSessionLiveActivity: Widget {
             )
             
             return DynamicIsland {
-                // Expanded UI goes here.  Compose the expanded UI through
+                // Expanded UI goes here. Compose the expanded UI through
                 // various regions, like leading/trailing/center/bottom
                 DynamicIslandExpandedRegion(.leading, priority: 10) {
                     if let coverImageData = context.attributes.coverImageData,
@@ -126,30 +127,35 @@ public struct ReadingSessionLiveActivity: Widget {
                     }
                 }
                 DynamicIslandExpandedRegion(.trailing) {
-                    HStack() {
+                    HStack {
                         ZStack(alignment: .topTrailing) {
                             // Background capsule in grey
-                            Capsule()
-                                .stroke(Color.gray, lineWidth: 5)
-                                .frame(width: 58, height: 58)
+                            let elapsedTime = getElapsedTime(
+                                isTimerRunning: context.state.isTimerRunning,
+                                startDate: context.state.startDate,
+                                elapsedTime: context.state.elapsedTime
+                            )
+                            // Create date range from elapsed time
+                            let startDate = Date(timeIntervalSinceNow: -elapsedTime)
+                            let endDate = startDate.addingTimeInterval(Double(context.attributes.dailyGoalTarget))
+                            let dateRange = startDate...endDate
                             
-                            // First progress capsule (0-75%)
-                            Capsule()
-                                .trim(from: 0.25, to: min(0.25 + totalProgress, 1.0))
-                                .stroke(Color.purple, lineWidth: 4)
-                                .frame(width: 58, height: 58)
-                                .rotationEffect(.degrees(180))
-                            
-                            // Second progress capsule (75-100%)
-                            Capsule()
-                                .trim(from: 0, to: totalProgress > 0.75 ? 
-                                    (totalProgress - 0.75) : 0)
-                                .stroke(Color.purple, lineWidth: 4)
-                                .frame(width: 58, height: 58)
-                                .rotationEffect(.degrees(180))
+                            if context.state.isTimerRunning {
+                                ProgressView(timerInterval: dateRange, countsDown: false)
+                                    .tint(.purple)
+                                    .progressViewStyle(.circular)
+                                    .foregroundStyle(.clear)
+                                    .frame(height: 65)
+                            } else {
+                                ProgressView(value: elapsedTime, total: Double(context.attributes.dailyGoalTarget))
+                                    .tint(.purple)
+                                    .progressViewStyle(.circular)
+                                    .foregroundStyle(.clear)
+                                    .frame(height: 65)
+                            }
                             
                             // Timer text
-                            if(context.state.isTimerRunning) {
+                            if context.state.isTimerRunning {
                                 Text(Date(timeIntervalSinceNow: -getElapsedTime(
                                     isTimerRunning: context.state.isTimerRunning,
                                     startDate: context.state.startDate,
@@ -160,7 +166,7 @@ public struct ReadingSessionLiveActivity: Widget {
                                     .multilineTextAlignment(.center)
                                     .frame(maxWidth: .infinity, alignment: .center)
                                     .foregroundColor(.white)
-                                    .frame(width: 58, height: 24)
+                                    .frame(width: 65, height: 32.5)
                                     .padding(.top)
                             } else {
                                 Text(formatElapsedTime(context.state.elapsedTime))
@@ -168,7 +174,7 @@ public struct ReadingSessionLiveActivity: Widget {
                                     .bold()
                                     .foregroundColor(.white)
                                     .frame(maxWidth: .infinity, alignment: .center)
-                                    .frame(width: 58, height: 24)
+                                    .frame(width: 65, height: 32.5)
                                     .padding(.top)
                             }
                         }
@@ -180,8 +186,8 @@ public struct ReadingSessionLiveActivity: Widget {
                         .font(.caption)
                 }
                 DynamicIslandExpandedRegion(.center) {
-                    HStack() {
-                        VStack() {
+                    HStack {
+                        VStack {
                             Text("\(context.attributes.title)")
                                 .foregroundColor(.purple)
                                 .font(.subheadline)
@@ -195,13 +201,10 @@ public struct ReadingSessionLiveActivity: Widget {
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .lineLimit(1)
                         }
-                        
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
-            }
-            compactLeading: {
-                
+            } compactLeading: {
                 if let coverImageData = context.attributes.coverImageData,
                    let uiImage = UIImage(data: coverImageData) {
                     Image(uiImage: uiImage)
@@ -213,29 +216,37 @@ public struct ReadingSessionLiveActivity: Widget {
                         .padding(.trailing)
                 }
             } compactTrailing: {
-                ZStack(alignment: .center) {
+                HStack() {
                     // Background capsule in grey
-                    Capsule()
-                        .stroke(Color.gray, lineWidth: 4)
-                        .frame(width: 60, height: 22)
+                    let elapsedTime = getElapsedTime(
+                        isTimerRunning: context.state.isTimerRunning,
+                        startDate: context.state.startDate,
+                        elapsedTime: context.state.elapsedTime
+                    )
+                    // Create date range from elapsed time
+                    let startDate = Date(timeIntervalSinceNow: -elapsedTime)
+                    let endDate = startDate.addingTimeInterval(Double(context.attributes.dailyGoalTarget))
+                    let dateRange = startDate...endDate
                     
-                    // First progress capsule (0-75%)
-                    Capsule()
-                        .trim(from: 0.25, to: min(0.25 + totalProgress, 1.0))
-                        .stroke(Color.purple, lineWidth: 3)
-                        .frame(width: 60, height: 22)
-                        .rotationEffect(.degrees(180))
+                    if context.state.isTimerRunning {
+                        ProgressView(timerInterval: dateRange, countsDown: false)
+                            .tint(.purple)
+                            .progressViewStyle(.circular)
+                            .foregroundStyle(.clear)
+                            .frame(height: 25)
+                            .padding(.leading, 2)
+                            .bold()
+
+                    } else {
+                        ProgressView(value: elapsedTime, total: Double(context.attributes.dailyGoalTarget))
+                            .tint(.purple)
+                            .progressViewStyle(.circular)
+                            .foregroundStyle(.clear)
+                            .frame(height: 25)
+                            .bold()
+                    }
                     
-                    // Second progress capsule (75-100%)
-                    Capsule()
-                        .trim(from: 0, to: totalProgress > 0.75 ? 
-                            (totalProgress - 0.75) : 0)
-                        .stroke(Color.purple, lineWidth: 3)
-                        .frame(width: 60, height: 22)
-                        .rotationEffect(.degrees(180))
-                    
-                    // Timer text
-                    if(context.state.isTimerRunning) {
+                    if context.state.isTimerRunning {
                         Text(Date(timeIntervalSinceNow: -getElapsedTime(
                             isTimerRunning: context.state.isTimerRunning,
                             startDate: context.state.startDate,
@@ -256,19 +267,31 @@ public struct ReadingSessionLiveActivity: Widget {
                             .frame(width: 50, height: 20)
                     }
                 }
-                .frame(width: 50, height: 20)
-                .padding(.leading)
-                .padding(.trailing, 5)
             } minimal: {
-                ZStack {
-                    Circle()
-                        .stroke(Color.gray, lineWidth: 4) // Set the stroke color and width
-                        .frame(width: 15, height: 15) // Set the size of the circle
-                    Circle()
-                        .trim(from: 0, to: CGFloat(totalProgress)) // Trim the circle based on progress
-                        .stroke(Color.purple, lineWidth: 4) // Set the stroke color and width
-                        .frame(width: 15, height: 15) // Set the size of the circle
-                        .rotationEffect(.degrees(-90)) // Rotate to start from the top
+                let elapsedTime = getElapsedTime(
+                    isTimerRunning: context.state.isTimerRunning,
+                    startDate: context.state.startDate,
+                    elapsedTime: context.state.elapsedTime
+                )
+                // Create date range from elapsed time
+                let startDate = Date(timeIntervalSinceNow: -elapsedTime)
+                let endDate = startDate.addingTimeInterval(Double(context.attributes.dailyGoalTarget))
+                let dateRange = startDate...endDate
+                if context.state.isTimerRunning {
+                    ProgressView(timerInterval: dateRange, countsDown: false)
+                        .tint(.purple)
+                        .progressViewStyle(.circular)
+                        .foregroundStyle(.clear)
+                        .frame(height: 25)
+                        .bold()
+
+                } else {
+                    ProgressView(value: elapsedTime, total: Double(context.attributes.dailyGoalTarget))
+                        .tint(.purple)
+                        .progressViewStyle(.circular)
+                        .foregroundStyle(.clear)
+                        .frame(height: 25)
+                        .bold()
                 }
             }
         }
@@ -284,10 +307,9 @@ public struct ReadingSessionLiveActivity: Widget {
     func getElapsedTime(isTimerRunning: Bool, startDate: Date, elapsedTime: TimeInterval) -> TimeInterval {
         // Updated to use dynamic calculation
         var updatedElapsedTime = elapsedTime   
-        if (updatedElapsedTime == 0) {
+        if updatedElapsedTime == 0 {
             updatedElapsedTime = isTimerRunning ? Date().timeIntervalSince(startDate) : elapsedTime
-        }
-        else {
+        } else {
             updatedElapsedTime = elapsedTime + Date().timeIntervalSince(startDate)
         }
         return updatedElapsedTime
@@ -341,7 +363,7 @@ public extension ReadingSessionAttributes {
         return ReadingSessionAttributes(
             title: "The Hobbit Part 1 Part 2 Part 3 Part 4 part 5",
             author: "J.R.R. Tolkien",
-            coverImageData: imageData, dailyGoalTarget: 3600
+            coverImageData: imageData, dailyGoalTarget: 240
         )
     }
 }
@@ -349,7 +371,7 @@ public extension ReadingSessionAttributes {
 public extension ReadingSessionAttributes.ContentState {
     static var first: ReadingSessionAttributes.ContentState {
         ReadingSessionAttributes.ContentState(
-            elapsedTime: 1000,
+            elapsedTime: 0,
             dailyGoalProgress: 0,
             startDate: Date(),
             isTimerRunning: true
@@ -358,9 +380,9 @@ public extension ReadingSessionAttributes.ContentState {
      
     static var second: ReadingSessionAttributes.ContentState {
         ReadingSessionAttributes.ContentState(
-            elapsedTime: 10000, 
+            elapsedTime: 10000,
             dailyGoalProgress: 0,
-            startDate: Date().addingTimeInterval(-5400), // 1.5 hours ago
+            startDate: Date(),
             isTimerRunning: false
         )
     }

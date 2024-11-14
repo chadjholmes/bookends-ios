@@ -6,14 +6,17 @@ struct CoverImageSection: View {
 
     var body: some View {
         VStack {
-            Text("Cover Image Section")
             if let image = viewModel.selectedImage {
                 Image(uiImage: image)
                     .resizable()
                     .scaledToFit()
                     .frame(height: 200)
             } else {
-                Text("No Cover Image Available")
+                Image(systemName: "book.fill")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(height: 200)
+                    .foregroundColor(.primary)
             }
             
             Button("Change Edition") {

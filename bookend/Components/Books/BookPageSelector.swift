@@ -2,7 +2,7 @@ import SwiftUI
 
 struct BookPageSelector: View {
     @Binding var currentPage: Int
-    var totalPages: Int
+    @Binding var totalPages: Int
     @State private var showingCurrentPagePicker = false
 
     var body: some View {
@@ -27,13 +27,28 @@ struct BookPageSelector: View {
             .cornerRadius(8) // Rounded corners for the button background
 
             // Slider for Page Selection
-            Slider(value: Binding(
-                get: { Double(currentPage) },
-                set: { newValue in
-                    currentPage = Int(newValue)
+            if totalPages > 0 {
+                Slider(value: Binding(
+                    get: { Double(currentPage) },
+                    set: { newValue in
+                        currentPage = Int(newValue)
+                    }
+                ), in: 0...Double(totalPages), step: 1)
+                .accentColor(.purple)
+            } else {
+                VStack {
+                    Text("😢 We couldn't find total pages for this title 😢") // Note about page counts
+                        .font(.headline)
+                        .foregroundColor(.gray) // Change text color to indicate no pages
+                        .padding(.top, 4)
+                    Text("you can still adjust the total below to match your copy!")
+                        .font(.subheadline)
+                        .foregroundColor(.gray) // Change text color to indicate no pages
                 }
-            ), in: 0...Double(totalPages), step: 1)
-            .accentColor(.purple)
+                .padding(.top, 8)
+                .background(Color(.systemGray6))
+                .cornerRadius(8)
+            }
 
             // Inline TextField for Current Page Input
             if showingCurrentPagePicker {
