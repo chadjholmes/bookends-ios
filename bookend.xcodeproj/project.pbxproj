@@ -139,7 +139,6 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
-				"Preview Content/Preview Assets.xcassets",
 			);
 			target = EB24F8F92CD54CC90027FD0E /* bookend */;
 		};

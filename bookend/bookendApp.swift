@@ -51,7 +51,7 @@ struct BookendApp: App {
         WindowGroup {
             LandingView()
                 .modelContainer(modelContainer)
-                .accentColor(.purple)
+                .accentColor(Color("Accent1"))
                 .onDisappear {
                     Task.detached {
                         for activity in Activity<ReadingSessionAttributes>.activities {

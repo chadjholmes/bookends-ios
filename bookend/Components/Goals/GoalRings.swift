@@ -8,10 +8,10 @@ struct GoalRings: View {
     let sessions: [ReadingSession]
     
     private let ringColors: [ReadingGoal.GoalPeriod: Color] = [
-        .daily: .red,
-        .weekly: .orange,
-        .monthly: .blue,
-        .yearly: .purple
+        .daily: Color("Accent1", bundle: .main),
+        .weekly: Color("Accent2", bundle: .main),
+        .monthly: Color("Accent3", bundle: .main),
+        .yearly: Color("Accent4", bundle: .main)
     ]
     
     private let ringWidths: [ReadingGoal.GoalPeriod: CGFloat] = [
@@ -96,6 +96,7 @@ struct GoalRings: View {
             .padding(.vertical)
         }
         .padding(.horizontal)
+        .background(Color("Primary"))
     }
     
     private func datePicker(width: CGFloat, height: CGFloat) -> some View {
@@ -116,7 +117,7 @@ struct GoalRings: View {
                             .font(.system(size: width * 0.030))
                             .frame(width: offset == 0 ? width * 0.25 : width * 0.08)
                             .padding(.vertical, height * 0.015)
-                            .background(offset == 0 ? Color.purple : Color.clear)
+                            .background(offset == 0 ? Color("Accent1") : Color.clear)
                             .foregroundColor(offset == 0 ? Color.white : (colorScheme == .dark ? Color.white : Color.black))
                             .cornerRadius(8)
                             .onTapGesture {
@@ -173,7 +174,7 @@ struct GoalRings: View {
         .frame(minWidth: 80, alignment: .leading)
         .padding(.vertical, height * 0.015) // Relative vertical padding
         .padding(.horizontal, width * 0.02) // Relative horizontal padding
-        .background(colorScheme == .dark ? Color.black.opacity(0.6) : Color.white.opacity(0.8))
+        .background(Color("Primary"))
         .cornerRadius(8)
     }
 }
@@ -209,7 +210,7 @@ struct GoalRing: View {
             filteredSessions = sessions.filter { $0.date >= yearStart && $0.date < yearEnd }
         }
         
-        return goal.calculateProgress(from: filteredSessions)
+        return goal.calculateProgress(from: filteredSessions, on: selectedDate)
     }
     
     var body: some View {
@@ -232,20 +233,77 @@ struct GoalRing: View {
 #Preview {
     let config = ModelConfiguration(isStoredInMemoryOnly: true)
     let container = try! ModelContainer(for: ReadingGoal.self, ReadingSession.self, configurations: config)
-    
+    let now = Date()
+    let calendar = Calendar.current
     let sampleGoals = [
-        ReadingGoal(type: .pages, target: 30, period: .daily, isActive: true),
+        ReadingGoal(type: .minutes, target: 30, period: .daily, isActive: true),
         ReadingGoal(type: .pages, target: 300, period: .weekly, isActive: true),
-        ReadingGoal(type: .pages, target: 5000, period: .monthly, isActive: true),
+        ReadingGoal(type: .minutes, target: 5000, period: .monthly, isActive: true),
         ReadingGoal(type: .pages, target: 10000, period: .yearly, isActive: true)
     ]
+
+    let sessions: [ReadingSession] = [
+            // Today: Long reading session of Dune
+            ReadingSession(
+                book: nil,
+                startPage: 380,
+                endPage: 412,
+                duration: 45*60,
+                date: now
+            ),
+            
+            // Yesterday: Project Hail Mary
+            ReadingSession(
+                book: nil,
+                startPage: 250,
+                endPage: 280,
+                duration: 60*60,
+                date: calendar.date(byAdding: .day, value: -1, to: now)!
+            ),
+            
+            // 3 days ago: More Project Hail Mary
+            ReadingSession(
+                book: nil,
+                startPage: 200,
+                endPage: 250,
+                duration: 90*60,
+                date: calendar.date(byAdding: .day, value: -3, to: now)!
+            ),
+            
+            // 4 days ago: Finished Foundation
+            ReadingSession(
+                book: nil,
+                startPage: 200,
+                endPage: 255,
+                duration: 120*60,
+                date: calendar.date(byAdding: .day, value: -4, to: now)!
+            ),
+            
+            // 5 days ago: Started Snow Crash
+            ReadingSession(
+                book: nil,
+                startPage: 100,
+                endPage: 123,
+                duration: 30*60,
+                date: calendar.date(byAdding: .day, value: -5, to: now)!
+            ),
+            
+            // A week ago: Foundation progress
+            ReadingSession(
+                book: nil,
+                startPage: 150,
+                endPage: 200,
+                duration: 75*60,
+                date: calendar.date(byAdding: .day, value: -7, to: now)!
+            )
+        ]
     
     return Group {
         // Light mode preview
         VStack {
             GoalRings(goals: [], sessions: [])
                 .padding()
-            GoalRings(goals: sampleGoals, sessions: [])
+            GoalRings(goals: sampleGoals, sessions: sessions)
                 .padding()
         }
         .modelContainer(container)
@@ -254,10 +312,9 @@ struct GoalRing: View {
         VStack {
             GoalRings(goals: [], sessions: [])
                 .padding()
-            GoalRings(goals: sampleGoals, sessions: [])
+            GoalRings(goals: sampleGoals, sessions: sessions)
                 .padding()
         }
         .modelContainer(container)
-        .preferredColorScheme(.dark)
     }
 } 

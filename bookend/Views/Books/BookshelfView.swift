@@ -83,8 +83,8 @@ struct BookshelfView: View {
                                 Text("All Books")
                                     .padding(.horizontal, 12)
                                     .padding(.vertical, 6)
-                                    .background(selectedGroupId == nil ? .purple : .gray.opacity(0.2))
-                                    .foregroundColor(selectedGroupId == nil ? .white : .primary)
+                                    .background(selectedGroupId == nil ? Color("Accent1") : .gray.opacity(0.4))
+                                    .foregroundColor(selectedGroupId == nil ? .white : Color("Primary"))
                                     .clipShape(RoundedRectangle(cornerRadius: 8))
                             }
                             
@@ -95,8 +95,8 @@ struct BookshelfView: View {
                                     Text(group.name)
                                         .padding(.horizontal, 12)
                                         .padding(.vertical, 6)
-                                        .background(selectedGroupId == group.id ? .purple : .gray.opacity(0.2))
-                                        .foregroundColor(selectedGroupId == group.id ? .white : .primary)
+                                        .background(selectedGroupId == group.id ? Color("Accent1") : .gray.opacity(0.4))
+                                        .foregroundColor(selectedGroupId == group.id ? .white : Color("Primary"))
                                         .clipShape(RoundedRectangle(cornerRadius: 8))
                                 }
                                 .contextMenu {
@@ -152,6 +152,7 @@ struct BookshelfView: View {
                     }
                     .padding()
                 }
+                .background(Color("Primary"))
                 .navigationTitle("") // Hide the default navigation title
                 .toolbar(.hidden, for: .navigationBar)
                 .safeAreaInset(edge: .top) {
@@ -164,7 +165,7 @@ struct BookshelfView: View {
                                 Image(systemName: "folder.badge.plus")
                                     .font(.system(size: 24))
                                     .frame(width: 44, height: 44)
-                                    .foregroundColor(.purple)
+                                    .foregroundColor(Color("Accent1"))
                             }
                             Button {
                                 showingAddBook = true
@@ -172,12 +173,12 @@ struct BookshelfView: View {
                                 Image(systemName: "plus")
                                     .font(.system(size: 24))
                                     .frame(width: 44, height: 44)
-                                    .foregroundColor(.purple)
+                                    .foregroundColor(Color("Accent1"))
                             }
                         }
                         .padding(.leading)
                     }
-                    .background(Color(UIColor.systemBackground).opacity(0.9)) // Background color for the header
+                    .background(Color("Primary").opacity(0.9)) // Background color for the header
                 }
                 .sheet(isPresented: $showingAddBook) {
                     BookAddView()

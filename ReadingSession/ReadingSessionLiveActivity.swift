@@ -38,7 +38,7 @@ public struct ReadingSessionLiveActivity: Widget {
                     // Center - Title and author
                     VStack(alignment: .leading) {
                         Text("\(context.attributes.title)")
-                            .foregroundColor(.purple)
+                            .foregroundColor(Color("Accent1"))
                             .font(.subheadline)  // Changed to match expanded view
                             .lineLimit(1)        // Changed to match expanded view
                         Text("\(context.attributes.author)")
@@ -63,13 +63,13 @@ public struct ReadingSessionLiveActivity: Widget {
                         
                         if context.state.isTimerRunning {
                             ProgressView(timerInterval: dateRange, countsDown: false)
-                                .tint(.purple)
+                                .tint(Color("Accent1"))
                                 .progressViewStyle(.circular)
                                 .foregroundStyle(.clear)
                                 .frame(height: 55)
                         } else {
                             ProgressView(value: elapsedTime, total: Double(context.attributes.dailyGoalTarget))
-                                .tint(.purple)
+                                .tint(Color("Accent1"))
                                 .progressViewStyle(.circular)
                                 .foregroundStyle(.clear)
                                 .frame(height: 55)
@@ -102,7 +102,7 @@ public struct ReadingSessionLiveActivity: Widget {
                 }
             }
             .activityBackgroundTint(Color(uiColor: .systemBackground))
-            .activitySystemActionForegroundColor(Color.purple)
+            .activitySystemActionForegroundColor(Color("Accent1"))
         } dynamicIsland: { context in
             let totalProgress = getTotalProgress(
                 dailyGoalTarget: context.attributes.dailyGoalTarget,
@@ -142,13 +142,13 @@ public struct ReadingSessionLiveActivity: Widget {
                             
                             if context.state.isTimerRunning {
                                 ProgressView(timerInterval: dateRange, countsDown: false)
-                                    .tint(.purple)
+                                    .tint(Color("Accent1"))
                                     .progressViewStyle(.circular)
                                     .foregroundStyle(.clear)
                                     .frame(height: 65)
                             } else {
                                 ProgressView(value: elapsedTime, total: Double(context.attributes.dailyGoalTarget))
-                                    .tint(.purple)
+                                    .tint(Color("Accent1"))
                                     .progressViewStyle(.circular)
                                     .foregroundStyle(.clear)
                                     .frame(height: 65)
@@ -189,7 +189,7 @@ public struct ReadingSessionLiveActivity: Widget {
                     HStack {
                         VStack {
                             Text("\(context.attributes.title)")
-                                .foregroundColor(.purple)
+                                .foregroundColor(Color("Accent1"))
                                 .font(.subheadline)
                                 .bold()
                                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -249,7 +249,7 @@ public struct ReadingSessionLiveActivity: Widget {
                     }
                     if context.state.isTimerRunning {
                         ProgressView(timerInterval: dateRange, countsDown: false)
-                            .tint(.purple)
+                            .tint(Color("Accent1"))
                             .progressViewStyle(.circular)
                             .foregroundStyle(.clear)
                             .frame(height: 25)
@@ -257,7 +257,7 @@ public struct ReadingSessionLiveActivity: Widget {
 
                     } else {
                         ProgressView(value: elapsedTime, total: Double(context.attributes.dailyGoalTarget))
-                            .tint(.purple)
+                            .tint(Color("Accent1"))
                             .progressViewStyle(.circular)
                             .foregroundStyle(.clear)
                             .frame(height: 25)
@@ -276,7 +276,7 @@ public struct ReadingSessionLiveActivity: Widget {
                 let dateRange = startDate...endDate
                 if context.state.isTimerRunning {
                     ProgressView(timerInterval: dateRange, countsDown: false)
-                        .tint(.purple)
+                        .tint(Color("Accent1"))
                         .progressViewStyle(.circular)
                         .foregroundStyle(.clear)
                         .frame(height: 25)
@@ -284,7 +284,7 @@ public struct ReadingSessionLiveActivity: Widget {
 
                 } else {
                     ProgressView(value: elapsedTime, total: Double(context.attributes.dailyGoalTarget))
-                        .tint(.purple)
+                        .tint(Color("Accent1"))
                         .progressViewStyle(.circular)
                         .foregroundStyle(.clear)
                         .frame(height: 25)

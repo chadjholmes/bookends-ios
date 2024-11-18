@@ -9,7 +9,7 @@ struct AddButton: View {
                 .font(.title2.bold())
                 .foregroundColor(.white)
                 .frame(width: 56, height: 56)
-                .background(Color.purple)
+                .background(Color("Accent1"))
                 .clipShape(Circle())
                 .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
         }

@@ -17,7 +17,7 @@ struct BookPageSelector: View {
                 }) {
                     Text("Current Page: \(currentPage) of \(totalPages)")
                         .font(.headline)
-                        .foregroundColor(.purple) // Change text color to indicate it's tappable
+                        .foregroundColor(Color("Accent1")) // Change text color to indicate it's tappable
                 }
                 .buttonStyle(PlainButtonStyle()) // Remove default button styling
                 Spacer()
@@ -34,7 +34,7 @@ struct BookPageSelector: View {
                         currentPage = Int(newValue)
                     }
                 ), in: 0...Double(totalPages), step: 1)
-                .accentColor(.purple)
+                .accentColor(Color("Accent1"))
             } else {
                 VStack {
                     Text("😢 We couldn't find total pages for this title 😢") // Note about page counts

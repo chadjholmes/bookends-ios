@@ -50,7 +50,7 @@ struct BookEditView: View {
                         saveBook()
                     }
                     .disabled(!canSave)
-                    .foregroundColor(.purple) // Match button color with BookView
+                    .foregroundColor(Color("Accent1")) // Match button color with BookView
                 }
             }
             .alert(isPresented: $viewModel.showAlert) {

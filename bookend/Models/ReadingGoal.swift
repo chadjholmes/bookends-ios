@@ -81,22 +81,27 @@ public final class ReadingGoal {
         return Double(progress) / Double(target)
     }
     
-    func calculateProgress(from sessions: [ReadingSession]) -> Double {
-        let now = Date()
+    func calculateProgress(from sessions: [ReadingSession], on date: Date) -> Double {
         let calendar = Calendar.current
         
         // Filter relevant sessions based on goal period
         let relevantSessions: [ReadingSession] = sessions.filter { session in
             switch self.period {
             case .daily:
-                return calendar.isDate(session.date, inSameDayAs: now)
+                return calendar.isDate(session.date, inSameDayAs: date)
             case .monthly:
-                return calendar.isDate(session.date, equalTo: now, toGranularity: .month)
+                return calendar.isDate(session.date, equalTo: date, toGranularity: .month)
             case .yearly:
-                return calendar.isDate(session.date, equalTo: now, toGranularity: .year)
+                return calendar.isDate(session.date, equalTo: date, toGranularity: .year)
             case .weekly:
-                return calendar.isDate(session.date, equalTo: now, toGranularity: .weekOfYear)
+                return calendar.isDate(session.date, equalTo: date, toGranularity: .weekOfYear)
             }
+        }
+        
+        // Logging the relevant sessions
+        print("Relevant sessions for goal \(self.target) on date \(date):")
+        for session in relevantSessions {
+            print("Session Date: \(session.date), Start Page: \(session.startPage), End Page: \(session.endPage), Duration: \(session.duration)")
         }
         
         // Calculate progress based on goal type
@@ -110,7 +115,8 @@ public final class ReadingGoal {
                 result += (session.endPage == session.book?.totalPages ? 1 : 0)
             }
         }
-        
+        print("goal type: \(self.type)")
+        print("Calculated progress for goal \(self.target) on date \(date): \(progress)")
         return Double(progress) / Double(target)
     }
 } 

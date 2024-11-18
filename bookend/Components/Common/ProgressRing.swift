@@ -8,7 +8,7 @@ struct ProgressRing: View {
     
     init(
         progress: Double,
-        color: Color = .purple,
+        color: Color = Color("Accent1"),
         lineWidth: CGFloat = 15,
         size: CGFloat = 100
     ) {

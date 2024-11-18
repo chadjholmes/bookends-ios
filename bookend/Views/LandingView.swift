@@ -3,9 +3,17 @@ import SwiftUI
 struct LandingView: View {
     @State private var selectedTab = 0
     
+    init() {
+        // Set the tab bar appearance
+        let appearance = UITabBarAppearance()
+        appearance.backgroundColor = UIColor(named: "Primary")
+        UITabBar.appearance().scrollEdgeAppearance = appearance
+        UITabBar.appearance().standardAppearance = appearance
+    }
+    
     var body: some View {
         TabView(selection: $selectedTab) {
-            HomeView()
+            HomeView() // HomeView will now handle its own animations
                 .tabItem {
                     Image(systemName: "house.fill")
                         .environment(\.symbolVariants, selectedTab == 0 ? .fill : .none)
@@ -28,17 +36,9 @@ struct LandingView: View {
                     Text("Insights")
                 }
                 .tag(2)
-                
-            GoalsView()
-                .tabItem {
-                    Image(systemName: "target")
-                        .environment(\.symbolVariants, selectedTab == 3 ? .fill : .none)
-                    Text("Goals")
-                }
-                .tag(3)
         }
-        .tint(.purple)
-        .edgesIgnoringSafeArea(.bottom)
+        .background(Color("Primary"))
+        .tint(Color("Accent1"))
     }
 }
 
@@ -47,3 +47,5 @@ struct LandingView_Previews: PreviewProvider {
         LandingView()
     }
 }
+
+

@@ -14,7 +14,9 @@ struct InsightsView: View {
     @Query private var books: [Book]
     @Query private var sessions: [ReadingSession]
     @Query private var groups: [BookGroup]
+    @Query private var goals: [ReadingGoal]
     @Query private var relationships: [BookGroupRelationship]
+    @State private var showingGoalsView = false
 
     private func nukeGroupData() {
         // Delete all relationships first
@@ -36,6 +38,7 @@ struct InsightsView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 20) {
+                    GoalRings(goals: goals, sessions: sessions)
                     // Quick Stats Card
                     QuickStatsCard(books: books, sessions: sessions)
                     
@@ -46,14 +49,35 @@ struct InsightsView: View {
                     ReadingTimeCard(sessions: sessions)
                     
                     // Pages Read Over Time
-                    ReadingProgressCard(sessions: sessions)
-                    
-                    // Book Completion Rate
-                    BookCompletionCard(books: books)
+                    ReadingPagesCard(sessions: sessions)
                 }
                 .padding()
             }
+            .background(Color(.primary))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        showingGoalsView = true
+                    } label: {
+                        Image(systemName: "gear")
+                    }
+                }
+            }
+            .sheet(isPresented: $showingGoalsView) {
+                NavigationStack {
+                    GoalsView()
+                        .toolbar {
+                            ToolbarItem(placement: .confirmationAction) {
+                                Button("Done") {
+                                    showingGoalsView = false
+                                }
+                            }
+                        }
+                }
+            }
         }
+        .background(Color("Primary"))
     }
 }
 
@@ -89,7 +113,7 @@ struct QuickStatsCard: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Quick Stats")
+            Text("All Time Stats")
                 .font(.headline)
             
             HStack(spacing: 20) {
@@ -108,13 +132,14 @@ struct QuickStatsCard: View {
 
 struct ReadingStreakCard: View {
     let sessions: [ReadingSession]
+    @State private var selectedDate = Date()
     
     var weeklyStreaks: [(date: Date, didRead: Bool)] {
         let calendar = Calendar.current
-        let now = Date()
+        let endDate = selectedDate
         
         return (0...6).map { dayOffset in
-            let date = calendar.date(byAdding: .day, value: -dayOffset, to: now)!
+            let date = calendar.date(byAdding: .day, value: -dayOffset, to: endDate)!
             let dayStart = calendar.startOfDay(for: date)
             let didRead = sessions.contains { calendar.isDate($0.date, inSameDayAs: dayStart) }
             return (date: dayStart, didRead: didRead)
@@ -123,15 +148,19 @@ struct ReadingStreakCard: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Reading Streak")
-                .font(.headline)
+            HStack {
+                Text("Reading Streak")
+                    .font(.headline)
+                Spacer()
+                WeekPicker(selectedDate: $selectedDate)
+            }
             
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 4) {
                     ForEach(weeklyStreaks, id: \.date) { day in
                         VStack(spacing: 4) {
                             RoundedRectangle(cornerRadius: 2)
-                                .fill(day.didRead ? Color.green : Color.gray.opacity(0.3))
+                                .fill(day.didRead ? Color("Accent1") : Color.gray.opacity(0.3))
                                 .frame(height: 40)
                             
                             Text(day.date, format: .dateTime.weekday(.narrow))
@@ -231,18 +260,18 @@ struct ReadingStreakCard: View {
 
 struct ReadingTimeCard: View {
     let sessions: [ReadingSession]
+    @State private var selectedDate = Date()
     
     var weeklyReadingTime: [(date: Date, minutes: Int)] {
         guard !sessions.isEmpty else { return [] }
         
         let calendar = Calendar.current
-        let now = Date()
-        _ = calendar.date(byAdding: .day, value: -7, to: now)!
+        let endDate = selectedDate
         
         // Create array of last 7 days
         var result: [(Date, Int)] = []
         for dayOffset in 0...6 {
-            let date = calendar.date(byAdding: .day, value: -dayOffset, to: now)!
+            let date = calendar.date(byAdding: .day, value: -dayOffset, to: endDate)!
             let dayStart = calendar.startOfDay(for: date)
             
             // Find sessions for this day
@@ -259,10 +288,47 @@ struct ReadingTimeCard: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Minutes Per Day")
-                .font(.headline)
+            HStack {
+                Text("Minutes By Day")
+                    .font(.headline)
+                Spacer()
+                WeekPicker(selectedDate: $selectedDate)
+            }
             
             if weeklyReadingTime.isEmpty {
+                Chart {
+                    // Create a line and area at y=0 for all days
+                    ForEach(0...6, id: \.self) { dayOffset in
+                        let date = Calendar.current.date(byAdding: .day, value: -dayOffset, to: Date())!
+                        LineMark(
+                            x: .value("Date", date),
+                            y: .value("Minutes", 0)
+                        )
+                        .interpolationMethod(.catmullRom)
+                        
+                        AreaMark(
+                            x: .value("Date", date),
+                            y: .value("Minutes", 0)
+                        )
+                        .foregroundStyle(.green.opacity(0.1))
+                        .interpolationMethod(.catmullRom)
+                    }
+                }
+                .frame(height: 200)
+                .chartYScale(domain: 0...50)
+                .chartXAxis {
+                    AxisMarks(values: .stride(by: .day)) { value in
+                        AxisGridLine()
+                        AxisValueLabel(format: .dateTime.month().day())
+                    }
+                }
+                .chartYAxis {
+                    AxisMarks(values: .stride(by: 25)) { value in
+                        AxisGridLine()
+                        AxisValueLabel()
+                    }
+                }
+                
                 Text("No reading sessions recorded yet")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
@@ -314,19 +380,20 @@ struct ReadingTimeCard: View {
     }
 }
 
-struct ReadingProgressCard: View {
+struct ReadingPagesCard: View {
     let sessions: [ReadingSession]
+    @State private var selectedDate = Date()
     
     var dailyProgress: [(date: Date, pages: Int)] {
         guard !sessions.isEmpty else { return [] }
         
         let calendar = Calendar.current
-        let now = Date()
+        let endDate = selectedDate
         
         // Create array of last 7 days
         var result: [(Date, Int)] = []
         for dayOffset in 0...6 {
-            let date = calendar.date(byAdding: .day, value: -dayOffset, to: now)!
+            let date = calendar.date(byAdding: .day, value: -dayOffset, to: endDate)!
             let dayStart = calendar.startOfDay(for: date)
             
             // Find sessions for this day
@@ -363,10 +430,47 @@ struct ReadingProgressCard: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Pages Per Day")
-                .font(.headline)
+            HStack {
+                Text("Pages by Day")
+                    .font(.headline)
+                Spacer()
+                WeekPicker(selectedDate: $selectedDate)
+            }
             
             if dailyProgress.isEmpty {
+                Chart {
+                    // Create a line and area at y=0 for all days
+                    ForEach(0...6, id: \.self) { dayOffset in
+                        let date = Calendar.current.date(byAdding: .day, value: -dayOffset, to: Date())!
+                        LineMark(
+                            x: .value("Date", date),
+                            y: .value("Pages", 0)
+                        )
+                        .interpolationMethod(.catmullRom)
+                        
+                        AreaMark(
+                            x: .value("Date", date),
+                            y: .value("Pages", 0)
+                        )
+                        .foregroundStyle(.purple.opacity(0.1))
+                        .interpolationMethod(.catmullRom)
+                    }
+                }
+                .frame(height: 200)
+                .chartYScale(domain: 0...50)
+                .chartXAxis {
+                    AxisMarks(values: .stride(by: .day)) { value in
+                        AxisGridLine()
+                        AxisValueLabel(format: .dateTime.month().day())
+                    }
+                }
+                .chartYAxis {
+                    AxisMarks(values: .stride(by: 25)) { value in
+                        AxisGridLine()
+                        AxisValueLabel()
+                    }
+                }
+                
                 Text("No reading sessions recorded yet")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
@@ -383,7 +487,7 @@ struct ReadingProgressCard: View {
                             x: .value("Date", item.date),
                             y: .value("Pages", item.pages)
                         )
-                        .foregroundStyle(.purple.opacity(0.1))
+                        .foregroundStyle(Color("Accent1").opacity(0.1))
                         .interpolationMethod(.catmullRom)
                     }
                 }
@@ -632,5 +736,48 @@ private struct InsightsView_Preview {
         
         return InsightsView()
             .modelContainer(container)
+    }
+}
+
+struct WeekPicker: View {
+    @Binding var selectedDate: Date
+    
+    var body: some View {
+        HStack {
+            Button(action: {
+                if let newDate = Calendar.current.date(byAdding: .day, value: -7, to: selectedDate) {
+                    selectedDate = newDate
+                }
+            }) {
+                Image(systemName: "chevron.left")
+            }
+            
+            Text(weekRangeText)
+                .font(.subheadline)
+            
+            Button(action: {
+                if let newDate = Calendar.current.date(byAdding: .day, value: 7, to: selectedDate) {
+                    let now = Date()
+                    selectedDate = newDate > now ? now : newDate
+                }
+            }) {
+                Image(systemName: "chevron.right")
+            }
+            .disabled(isCurrentWeek)
+        }
+    }
+    
+    private var weekRangeText: String {
+        let calendar = Calendar.current
+        let weekStart = calendar.date(byAdding: .day, value: -6, to: selectedDate)!
+        
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "MMM d"
+        
+        return "\(dateFormatter.string(from: weekStart)) - \(dateFormatter.string(from: selectedDate))"
+    }
+    
+    private var isCurrentWeek: Bool {
+        Calendar.current.isDate(selectedDate, equalTo: Date(), toGranularity: .day)
     }
 }

@@ -7,6 +7,13 @@ struct HomeView: View {
     @Query private var goals: [ReadingGoal]
     @Query private var sessions: [ReadingSession]
     @State private var showingAddBook = false
+    @State private var wiggle = false
+    @State private var imageOffset: CGFloat = UIScreen.main.bounds.height
+    @State private var rotationAngle: Double = 0
+    @State private var showSpeechBubble = false
+    @State private var idleTimer: Timer?
+    @State private var remainingIdleTime: TimeInterval = 15.0
+    @State private var slideTimer: Timer?
     
     var body: some View {
         NavigationStack {
@@ -14,27 +21,70 @@ struct HomeView: View {
             let screenHeight = UIScreen.main.bounds.height
             
             ScrollView {
-                VStack(alignment: .center, spacing: screenHeight * 0.025) {
-                    Spacer()
-                        .padding(.bottom, screenHeight * 0.1)
-                    GoalRings(goals: goals, sessions: sessions)
-                        .frame(maxWidth: screenWidth, alignment: .center)
-                        .padding(.horizontal, screenWidth * 0.05)
-                    Text("Jump back in...")
-                        .bold()
-                        .frame(maxWidth: screenWidth, alignment: .leading)
-                        .padding(.leading, screenWidth * 0.05)
-                        .font(.system(size: screenWidth * 0.035))
-                    if books.isEmpty {
-                        EmptyBooksList(showingAddBook: $showingAddBook)
-                            .frame(maxWidth: .infinity, alignment: .center)
-                    } else {
-                        BookCarousel(books: books, modelContext: modelContext)
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                ZStack {
+                    VStack(alignment: .leading) {
+                        Spacer()
+                            .padding(.bottom, screenHeight * 0.1)
+                        GoalRings(goals: goals, sessions: sessions)
+                            .frame(maxWidth: screenWidth, alignment: .center)
+                            .padding(.horizontal, screenWidth * 0.05)
+                        Text("Jump back in...")
+                            .bold()
+                            .frame(maxWidth: screenWidth, alignment: .leading)
                             .padding(.leading, screenWidth * 0.05)
+                            .font(.system(size: screenWidth * 0.035))
+                        if books.isEmpty {
+                            EmptyBooksList(showingAddBook: $showingAddBook)
+                                .frame(maxWidth: .infinity, alignment: .center)
+                        } else {
+                            BookCarousel(books: books, modelContext: modelContext)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.leading, screenWidth * 0.05)
+                        }
+                    }
+                    .padding(.bottom, screenHeight * 0.025)
+                    .onAppear {
+                        resetIdleTimer() // Reset the idle timer when the view appears
+                        resumeIdleTimer() // Resume the idle timer when the view appears
+                    }
+                    .onDisappear {
+                        pauseIdleTimer() // Pause the idle timer when the view disappears
+                        resetAnimationState() // Reset animation state
+                    }
+                    .onTapGesture {
+                        resetIdleTimer() // Reset the idle timer on user interaction
+                    }
+
+                    VStack {
+                        Spacer()
+                            .padding(.bottom, screenHeight * 0.1)
+                        
+                        ZStack(alignment: .center) {
+                            NavigationLink(destination: BookshelfView()) {
+                                Image("King")
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: screenWidth * 0.8)
+                                    .offset(y: imageOffset - screenHeight * 0.1)
+                                    .rotationEffect(.degrees(rotationAngle))
+                                    .zIndex(1)
+                            }
+                            
+                            if showSpeechBubble {
+                                NavigationLink(destination: BookshelfView()) {
+                                    Text("Why dost thou linger? Read thy books!")
+                                        .padding()
+                                        .background(Color.white.opacity(1.0))
+                                        .foregroundColor(Color("Accent3"))
+                                        .cornerRadius(10)
+                                        .offset(y: screenHeight * 0.04)
+                                        .font(.system(size: screenWidth * 0.030))
+                                        .zIndex(2)
+                                }
+                            }
+                        }
                     }
                 }
-                .padding(.bottom, screenHeight * 0.025)
             }
             .scrollDisabled(true)
             .navigationBarHidden(true)
@@ -42,7 +92,74 @@ struct HomeView: View {
             .sheet(isPresented: $showingAddBook) {
                 BookAddView()
             }
+            .background(Color("Primary"))
         }
+        .background(Color("Primary"))
+    }
+    
+    private func startAnimationCycle() {
+        slideImage()
+    }
+    
+    private func resetAnimationState() {
+        idleTimer?.invalidate()
+        idleTimer = nil
+        slideTimer?.invalidate()
+        slideTimer = nil
+        imageOffset = UIScreen.main.bounds.height
+        rotationAngle = 0
+        showSpeechBubble = false
+    }
+    
+    private func slideImage() {
+        withAnimation(Animation.easeIn(duration: 5.0)) {
+            imageOffset = UIScreen.main.bounds.height * 0.1
+        }
+        
+        // Delay the wiggle animation until the slide-in is complete
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
+            withAnimation(Animation.easeInOut(duration: 0.5).repeatForever(autoreverses: true)) {
+                rotationAngle = 10 // Add a small rotation for the wiggle effect
+            }
+            showSpeechBubble = true
+        }
+        
+        slideTimer?.invalidate()
+        slideTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { timer in
+            // Check if the image should disappear
+            if self.remainingIdleTime <= 0 {
+                withAnimation {
+                    self.imageOffset = UIScreen.main.bounds.height // Move the image off-screen
+                    self.rotationAngle = 0 // Reset rotation
+                    self.showSpeechBubble = false // Hide the speech bubble
+                }
+                timer.invalidate() // Stop the timer
+            }
+        }
+        
+        // Set the time after which the image should disappear
+        remainingIdleTime = 5.0
+    }
+    
+    private func resumeIdleTimer() {
+        idleTimer?.invalidate() // Invalidate any existing idle timer
+        idleTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { timer in
+            remainingIdleTime -= 1
+            if remainingIdleTime <= 0 {
+                timer.invalidate()
+                startAnimationCycle() // Start animation when idle time is up
+            }
+        }
+    }
+    
+    private func pauseIdleTimer() {
+        idleTimer?.invalidate()
+        idleTimer = nil
+    }
+    
+    private func resetIdleTimer() {
+        remainingIdleTime = 15.0
+        resumeIdleTimer()
     }
 }
 
@@ -64,12 +181,13 @@ private struct EmptyBooksList: View {
             }) {
                 Text("Add a Book")
                     .font(.system(size: screenWidth * 0.04))
-                    .foregroundColor(.purple)
+                    .foregroundColor(Color("Accent1"))
                     .padding(.vertical, screenHeight * 0.015)
                     .padding(.horizontal, screenWidth * 0.05)
-                    .background(Color.purple.opacity(0.1))
                     .cornerRadius(8)
             }
+            .background(Color("Accent1").opacity(0.2))
+            .cornerRadius(12)
         }
         .padding(.bottom, screenHeight * 0.1)
     }

@@ -32,11 +32,11 @@ struct BookCover: View {
                     .overlay(
                         ProgressRing(
                             progress: Double(progressPercentage),
-                            color: Color.purple,
+                            color: Color("Accent1"),
                             lineWidth: 4,
                             size: 32
                         )
-                        .foregroundColor(.purple)
+                        .foregroundColor(Color("Accent1"))
                         .padding(4),
                         alignment: .bottomTrailing
                     )
@@ -51,11 +51,11 @@ struct BookCover: View {
                     .overlay(
                         ProgressRing(
                             progress: Double(progressPercentage),
-                            color: Color.purple,
+                            color: Color("Accent1"),
                             lineWidth: 4,
                             size: 32
                         )
-                        .foregroundColor(.purple)
+                        .foregroundColor(Color("Accent1"))
                         .padding(4),
                         alignment: .bottomTrailing
                     )

@@ -19,7 +19,7 @@ struct BookProgress: View {
             .font(.subheadline)
             
             ProgressView(value: Double(currentPage), total: Double(book.totalPages))
-                .tint(.purple)
+                .tint(Color("Accent1"))
             
             PageStepper(currentPage: $currentPage, book: book, modelContext: modelContext)
         }

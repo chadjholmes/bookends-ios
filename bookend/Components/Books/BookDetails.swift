@@ -8,7 +8,7 @@ struct BookDetails: View {
             Text(book.title)
                 .font(.title)
                 .bold()
-                .foregroundColor(.purple)
+                .foregroundColor(Color("Accent1"))
             
             if !book.author.isEmpty {
                 Text("by \(book.author)")

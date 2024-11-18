@@ -36,7 +36,7 @@ struct BookView: View {
                         Text("Record Session")
                             .frame(maxWidth: .infinity) // Ensure full width
                             .padding()
-                            .background(Color.purple)
+                            .background(Color("Accent1"))
                             .foregroundColor(.white)
                             .cornerRadius(10)
                     }
@@ -47,7 +47,7 @@ struct BookView: View {
                         Text("Enter Session")
                             .frame(maxWidth: .infinity) // Ensure full width
                             .padding()
-                            .background(Color.indigo)
+                            .background(Color("Accent1"))
                             .foregroundColor(.white)
                             .cornerRadius(10)
                     }
@@ -65,7 +65,7 @@ struct BookView: View {
                     }
                 }
                 .padding()
-                .accentColor(.purple)
+                .accentColor(Color("Accent1"))
                 .background(Color(.systemGray6))
                 .cornerRadius(10)
                 .frame(maxWidth: .infinity) // Ensure full width to match button

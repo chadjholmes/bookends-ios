@@ -36,7 +36,7 @@ struct BookGroupSelectionView: View {
                         
                         if bookRelationships.contains(where: { $0.group.id == group.id }) {
                             Image(systemName: "checkmark")
-                                .foregroundStyle(.purple)
+                                .foregroundStyle(Color("Accent1"))
                         }
                     }
                     .contentShape(Rectangle())

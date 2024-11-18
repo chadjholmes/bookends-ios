@@ -56,7 +56,7 @@ struct LiveSessionView: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 40, height: 40) // Adjust size as needed
-                        .foregroundStyle(Color(.purple))
+                        .foregroundStyle(Color("Accent1"))
                 }
 
                 // Play/Pause Button
@@ -71,7 +71,7 @@ struct LiveSessionView: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 40, height: 40) // Adjust size as needed
-                        .foregroundStyle(Color(.purple))
+                        .foregroundStyle(Color("Accent1"))
                 }
 
                 // Fast Forward 10 Seconds Button
@@ -82,7 +82,7 @@ struct LiveSessionView: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 40, height: 40) // Adjust size as needed
-                        .foregroundStyle(Color(.purple))
+                        .foregroundStyle(Color("Accent1"))
                 }
             }
             .padding()
@@ -101,7 +101,7 @@ struct LiveSessionView: View {
                 Text("Save Session")
                     .bold()
                     .padding()
-                    .background(Color.purple)
+                    .background(Color("Accent1"))
                     .cornerRadius(20)
                     .foregroundColor(.white)
             }
@@ -227,7 +227,7 @@ struct LiveSessionView: View {
             dailyGoalTarget: Int(dailyGoalTarget)
         )
     
-        let existingProgress = dailyGoal?.calculateProgress(from: readingSessions) ?? 0.0
+        let existingProgress = dailyGoal?.calculateProgress(from: readingSessions, on: sessionStartDate ?? Date()) ?? 0.0
         let progress = min(existingProgress + (elapsedTime / dailyGoalTarget), 1.0)
         
         let initialState = ReadingSessionAttributes.ContentState(
@@ -255,7 +255,7 @@ struct LiveSessionView: View {
         
         let dailyGoal = readingGoals.filter { $0.period == .daily }.first
         let dailyGoalTarget = Double(dailyGoal?.target ?? 60) * 60
-        let existingProgress = dailyGoal?.calculateProgress(from: readingSessions) ?? 0.0
+        let existingProgress = dailyGoal?.calculateProgress(from: readingSessions, on: sessionStartDate ?? Date()) ?? 0.0
         let progress = min(existingProgress + (elapsedTime / dailyGoalTarget), 1.0)
         
         let updatedState = ReadingSessionAttributes.ContentState(

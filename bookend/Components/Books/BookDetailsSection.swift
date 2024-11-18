@@ -9,7 +9,7 @@ struct BookDetailsSection: View {
             Text("Title")
                 .font(.headline)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .accentColor(.purple)
+                .accentColor(Color("Accent1"))
             TextField("Enter title", text: $viewModel.title)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
             

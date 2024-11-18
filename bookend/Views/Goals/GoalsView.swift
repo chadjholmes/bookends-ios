@@ -17,96 +17,78 @@ struct GoalsView: View {
     
     var body: some View {
         NavigationView {
-            List {
-                Text("Total goals: \(goals.count)")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .onAppear {
-                        print("\n=== Goals View Debug ===")
-                        print("Goals count: \(goals.count)")
+            goalsList
+        }
+        .background(Color("Primary"))
+        .navigationViewStyle(.stack)
+    }
+    
+    private var goalsList: some View {
+        List {
+            Text("Total goals: \(goals.count)")
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .listRowBackground(Color("Primary"))
+            
+            ForEach(goals) { goal in
+                GoalCard(goal: goal, sessions: sessions)
+                    .swipeActions(edge: .trailing) {
+                        Button(role: .destructive) {
+                            goalToDelete = goal
+                            showingDeleteAlert = true
+                        } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
                         
-                        // Try direct fetch
-                        do {
-                            let descriptor = FetchDescriptor<ReadingGoal>()
-                            let directFetch = try modelContext.fetch(descriptor)
-                            print("\nDirect fetch results:")
-                            print("Found \(directFetch.count) goals")
-                            directFetch.forEach { goal in
-                                print("- Goal: \(goal.target) \(goal.type) (active: \(goal.isActive))")
-                            }
-                        } catch {
-                            print("Direct fetch failed: \(error)")
+                        Button {
+                            editingGoal = goal
+                        } label: {
+                            Label("Edit", systemImage: "pencil")
                         }
+                        .tint(.orange)
                     }
-                
-                ForEach(goals) { goal in
-                    GoalCard(goal: goal, sessions: sessions)
-                        .onAppear {
-                            print("Displaying goal: \(goal.target) \(goal.type)")
-                        }
-                        .swipeActions(edge: .trailing) {
-                            Button(role: .destructive) {
-                                goalToDelete = goal
-                                showingDeleteAlert = true
-                            } label: {
-                                Label("Delete", systemImage: "trash")
-                            }
-                            
-                            Button {
-                                editingGoal = goal
-                            } label: {
-                                Label("Edit", systemImage: "pencil")
-                            }
-                            .tint(.orange)
-                        }
-                        .swipeActions(edge: .leading) {
-                            Button {
-                                toggleGoalStatus(goal)
-                            } label: {
-                                Label(goal.isActive ? "Pause" : "Resume", 
-                                      systemImage: goal.isActive ? "pause.fill" : "play.fill")
-                            }
-                            .tint(goal.isActive ? .yellow : .green)
-                        }
+                    .listRowBackground(Color("Primary"))
+            }
+        }
+        .scrollContentBackground(.hidden)
+        .background(Color("Primary"))
+        .listStyle(.plain)
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button(action: { showingAddGoal = true }) {
+                    Image(systemName: "plus")
                 }
             }
-            .toolbar {
-                ToolbarItem(placement: .primaryAction) {
-                    Button(action: { showingAddGoal = true }) {
-                        Image(systemName: "plus")
-                    }
+            ToolbarItem(placement: .bottomBar) {
+                Button("Clear All Sessions (Testing Only)") {
+                    showingClearSessionsAlert = true
                 }
-                ToolbarItem(placement: .bottomBar) {
-                    Button("Clear All Sessions (Testing Only)") {
-                        showingClearSessionsAlert = true
-                    }
-                    .foregroundColor(.red)
+                .foregroundColor(.red)
+            }
+        }
+        .sheet(isPresented: $showingAddGoal) {
+            GoalEditView(mode: .create)
+        }
+        .sheet(item: $editingGoal) { goal in
+            GoalEditView(mode: .edit(goal))
+        }
+        .alert("Delete Goal?", isPresented: $showingDeleteAlert) {
+            Button("Cancel", role: .cancel) {}
+            Button("Delete", role: .destructive) {
+                if let goal = goalToDelete {
+                    deleteGoal(goal)
                 }
             }
-            .sheet(isPresented: $showingAddGoal) {
-                GoalEditView(mode: .create)
+        } message: {
+            Text("This action cannot be undone.")
+        }
+        .alert("Clear All Reading Sessions?", isPresented: $showingClearSessionsAlert) {
+            Button("Cancel", role: .cancel) {}
+            Button("Clear", role: .destructive) {
+                clearAllReadingSessions()
             }
-            .sheet(item: $editingGoal) { goal in
-                GoalEditView(mode: .edit(goal))
-            }
-            .alert("Delete Goal?", isPresented: $showingDeleteAlert) {
-                Button("Cancel", role: .cancel) {}
-                Button("Delete", role: .destructive) {
-                    if let goal = goalToDelete {
-                        deleteGoal(goal)
-                    }
-                }
-            } message: {
-                Text("This action cannot be undone.")
-            }
-            .alert("Clear All Reading Sessions?", isPresented: $showingClearSessionsAlert) {
-                Button("Cancel", role: .cancel) {}
-                Button("Clear", role: .destructive) {
-                    clearAllReadingSessions()
-                }
-            } message: {
-                Text("This will delete all reading sessions for all books. This action cannot be undone.")
-            }
+        } message: {
+            Text("This will delete all reading sessions for all books. This action cannot be undone.")
         }
     }
     
@@ -219,6 +201,8 @@ struct GoalEditView: View {
                     }
                 }
             }
+            .scrollContentBackground(.hidden)
+            .background(Color("Primary"))
             .navigationTitle(mode.title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -235,6 +219,7 @@ struct GoalEditView: View {
                 }
             }
         }
+        .background(Color("Primary"))
     }
     
     private func saveGoal() {
@@ -330,21 +315,21 @@ struct GoalCard: View {
     let sessions: [ReadingSession]
     
     var progress: Double {
-        goal.calculateProgress(from: sessions)
+        goal.calculateProgress(from: sessions, on: Date())
     }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Image(systemName: goal.type.iconName)
-                    .foregroundColor(goal.isActive ? .primary : .secondary)
+                    .foregroundColor(goal.isActive ? Color("Accent1") : Color.gray)
                 Text("\(goal.target) \(goal.type.description) \(goal.period.description)")
                     .font(.headline)
                 Spacer()
                 if !goal.isActive {
                     Text("Paused")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(Color("Accent1"))
                 }
             }
             
@@ -358,9 +343,10 @@ struct GoalCard: View {
                 Text("\(Int(progress * 100))%")
                     .font(.caption)
             }
-            .foregroundColor(.secondary)
+            .foregroundColor(Color("Accent1"))
         }
         .padding()
+        .background(Color("Primary"))
     }
 }
 
@@ -396,15 +382,27 @@ extension ReadingGoal.GoalPeriod {
 
 extension ReadingGoal {
     var progressColor: Color {
-        let progress = calculateProgress(from: [])
-        if progress >= 1.0 { return .green }
-        if progress >= 0.7 { return .yellow }
+        let progress = calculateProgress(from: [], on: Date())
+        if progress >= 1.0 { return Color("Accent2") }
+        if progress >= 0.7 { return Color.gray }
         return .red
     }
 }
 
 // Add a preview provider for testing
 #Preview {
-    GoalsView()
-        .modelContainer(for: ReadingGoal.self, inMemory: true)
+    let config = ModelConfiguration(isStoredInMemoryOnly: true)
+    let container = try! ModelContainer(for: ReadingGoal.self, configurations: config)
+    
+    // Add some sample goals
+    let sampleGoals = [
+        ReadingGoal(type: .pages, target: 30, period: .daily, isActive: true),
+        ReadingGoal(type: .minutes, target: 60, period: .weekly, isActive: true),
+        ReadingGoal(type: .books, target: 12, period: .yearly, isActive: false)
+    ]
+    
+    sampleGoals.forEach { container.mainContext.insert($0) }
+    
+    return GoalsView()
+        .modelContainer(container)
 } 
