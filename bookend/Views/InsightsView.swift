@@ -452,7 +452,7 @@ struct ReadingPagesCard: View {
                             x: .value("Date", date),
                             y: .value("Pages", 0)
                         )
-                        .foregroundStyle(.purple.opacity(0.1))
+                        .foregroundStyle(Color("Accent1").opacity(0.1))
                         .interpolationMethod(.catmullRom)
                     }
                 }

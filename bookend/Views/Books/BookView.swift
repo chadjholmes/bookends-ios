@@ -80,7 +80,7 @@ struct BookView: View {
                     isEditing = true
                     selectedBook = book
                 }
-                .foregroundColor(.purple)
+                .foregroundColor(Color("Accent1"))
             }
             ToolbarItem(placement: .bottomBar) {
                 Button("Clear Reading Sessions") {
