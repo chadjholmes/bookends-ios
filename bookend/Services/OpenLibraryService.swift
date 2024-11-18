@@ -54,17 +54,12 @@ class OpenLibraryService {
         let searchQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
         let encodedQuery = searchQuery.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? searchQuery
         
-        // Changed URL to use q parameter instead of title for broader search
-        // Added limit parameter to get more results
-        // Added mode=everything to search across all fields
-        let url = URL(string: "\(baseURL)/search.json?q=\(encodedQuery)&fields=key,title,author_name,number_of_pages_median,cover_i,first_publish_year,publisher,isbn&mode=everything&limit=50")!
+        let url = URL(string: "\(baseURL)/search.json?q=\(encodedQuery)&fields=key,title,author_name,number_of_pages_median,cover_i,first_publish_year,publisher,isbn&lang=en")!
         
-        // Log the outbound request URL
         print("Request URL: \(url.absoluteString)")
 
         let (data, response) = try await URLSession.shared.data(from: url)
 
-        // Log the response data
         if let httpResponse = response as? HTTPURLResponse {
             print("Response Status Code: \(httpResponse.statusCode)")
         }
@@ -72,31 +67,81 @@ class OpenLibraryService {
         
         let decodedResponse = try JSONDecoder().decode(OpenLibraryResponse.self, from: data)
         
-        // Improved sorting algorithm
-        return decodedResponse.docs.sorted { book1, book2 in
-            // First priority: Title contains exact query (case-insensitive)
-            let queryLower = searchQuery.lowercased()
-            let title1Contains = book1.title.lowercased().contains(queryLower)
-            let title2Contains = book2.title.lowercased().contains(queryLower)
-            
-            if title1Contains && !title2Contains { return true }
-            if title2Contains && !title1Contains { return false }
-            
-            // Second priority: Title starts with query
-            let title1Starts = book1.title.lowercased().starts(with: queryLower)
-            let title2Starts = book2.title.lowercased().starts(with: queryLower)
-            
-            if title1Starts && !title2Starts { return true }
-            if title2Starts && !title1Starts { return false }
-            
-            // Third priority: Completeness score
-            if book1.completenessScore != book2.completenessScore {
-                return book1.completenessScore > book2.completenessScore
+        // Generate variants of the search query within an edit distance of 2
+        let variants = generateVariants(for: searchQuery)
+
+        // Filter books based on substring match with variants
+        let filteredBooks = decodedResponse.docs.filter { book in
+            let titleMatch = variants.contains { variant in
+                book.title.lowercased().contains(variant.lowercased())
             }
-            
-            // Final priority: Alphabetical order
-            return book1.title < book2.title
+            let authorMatch = book.author_name?.contains(where: { author in
+                variants.contains { variant in
+                    author.lowercased().contains(variant.lowercased())
+                }
+            }) ?? false
+            return titleMatch || authorMatch
         }
+        
+        return filteredBooks
+    }
+
+    // Function to generate variants within an edit distance of 2
+    private func generateVariants(for query: String) -> [String] {
+        var variants = Set<String>()
+        // Add the original query
+        variants.insert(query)
+
+        // Generate variants by modifying the query
+        // You can implement a more sophisticated variant generation here
+        for i in 0..<query.count {
+            let index = query.index(query.startIndex, offsetBy: i)
+            let char = query[index]
+
+            // Deletion
+            let deleted = query.replacingCharacters(in: index...index, with: "")
+            variants.insert(deleted)
+
+            // Substitution (replace with all lowercase letters)
+            for letter in "abcdefghijklmnopqrstuvwxyz" {
+                let substituted = query.replacingCharacters(in: index...index, with: String(letter))
+                variants.insert(substituted)
+            }
+
+            // Insertion (insert a letter)
+            for letter in "abcdefghijklmnopqrstuvwxyz" {
+                let inserted = query.replacingCharacters(in: index...index, with: "\(char)\(letter)")
+                variants.insert(inserted)
+            }
+        }
+
+        return Array(variants).filter { $0.count <= query.count + 2 } // Limit to reasonable length
+    }
+
+    // Function to calculate the Levenshtein distance
+    private func editDistance(_ a: String, _ b: String) -> Int {
+        let aCount = a.count
+        let bCount = b.count
+        var matrix = [[Int]]()
+
+        for i in 0...aCount {
+            matrix.append(Array(repeating: 0, count: bCount + 1))
+            matrix[i][0] = i
+        }
+        for j in 0...bCount {
+            matrix[0][j] = j
+        }
+
+        for i in 1...aCount {
+            for j in 1...bCount {
+                let cost = a[a.index(a.startIndex, offsetBy: i - 1)] == b[b.index(b.startIndex, offsetBy: j - 1)] ? 0 : 1
+                matrix[i][j] = min(matrix[i - 1][j] + 1,      // Deletion
+                                   matrix[i][j - 1] + 1,      // Insertion
+                                   matrix[i - 1][j - 1] + cost) // Substitution
+            }
+        }
+
+        return matrix[aCount][bCount]
     }
 
     /// Fetches detailed information about a book using its key.

@@ -376,7 +376,7 @@ struct ReadingTimeCard: View {
     
     var averageReadingTime: Int {
         guard !sessions.isEmpty else { return 0 }
-        return sessions.reduce(0) { $0 + $1.duration } / sessions.count
+        return sessions.reduce(0) { $0 + $1.duration } / sessions.count / 60
     }
 }
 
@@ -505,11 +505,19 @@ struct ReadingPagesCard: View {
                     }
                 }
             }
+            Text("Average: \(averagePagesRead) pages per session")
+                .font(.caption)
+                .foregroundColor(.secondary)
         }
         .padding()
         .background(Color(.systemBackground))
         .cornerRadius(12)
         .shadow(radius: 2)
+
+        var averagePagesRead: Int {
+            guard !sessions.isEmpty else { return 0 }
+            return sessions.reduce(0) { $0 + ($1.endPage - $1.startPage) } / sessions.count
+        }
     }
     
     // Calculate linear regression slope

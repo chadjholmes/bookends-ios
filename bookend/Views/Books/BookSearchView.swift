@@ -5,6 +5,7 @@ struct BookSearchView: View {
     @Binding var searchResults: [OpenLibraryBook]
     @Binding var isSearching: Bool
     let onBookSelected: (OpenLibraryBook) -> Void
+    @State private var searchDebounceTimer: Timer? = nil
     
     var body: some View {
         NavigationView {
@@ -47,9 +48,12 @@ struct BookSearchView: View {
                 }
             }
             .navigationTitle("Search Books")
-            .searchable(text: $searchQuery, prompt: "Search by title, author, etc.")
-            .onSubmit(of: .search) {
-                performSearch()
+            .searchable(text: $searchQuery, prompt: "Search by title or author")
+            .onChange(of: searchQuery) { newValue in
+                searchDebounceTimer?.invalidate() // Cancel any existing timer
+                searchDebounceTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: false) { _ in
+                    performSearch()
+                }
             }
             .overlay(
                 Group {

@@ -28,7 +28,7 @@ struct BookAddView: View {
         NavigationView {
             Form {
                 Section(header: Text("Search")) {
-                    Button("Search OpenLibrary") {
+                    Button("Search Books") {
                         showingSearch = true
                     }
                 }
