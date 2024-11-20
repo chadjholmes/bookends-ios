@@ -132,12 +132,7 @@ struct LiveSessionView: View {
     }
 
     private func dismissToBooksView() {
-        // Dismiss the current view (ReadingSessionView)
-        presentationMode.wrappedValue.dismiss()
-        // Dismiss the previous view (LiveSessionView)
-        DispatchQueue.main.async {
-            presentationMode.wrappedValue.dismiss()
-        }
+       dismiss()
     }
 
     // Timer functions
