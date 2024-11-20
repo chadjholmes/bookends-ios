@@ -14,6 +14,7 @@ struct HomeView: View {
     @State private var idleTimer: Timer?
     @State private var remainingIdleTime: TimeInterval = 15.0
     @State private var slideTimer: Timer?
+    @State private var isAnimating = false
     
     var body: some View {
         NavigationStack {
@@ -55,34 +56,41 @@ struct HomeView: View {
                         resetIdleTimer() // Reset the idle timer on user interaction
                     }
 
-                    VStack {
-                        Spacer()
-                            .padding(.bottom, screenHeight * 0.1)
-                        
-                        ZStack(alignment: .center) {
-                            NavigationLink(destination: BookshelfView()) {
-                                Image("King")
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(width: screenWidth * 0.8)
-                                    .offset(y: imageOffset - screenHeight * 0.1)
-                                    .rotationEffect(.degrees(rotationAngle))
-                                    .zIndex(1)
-                            }
+                    if isAnimating {
+                        VStack {
+                            Spacer()
+                                .padding(.bottom, screenHeight * 0.1)
                             
-                            if showSpeechBubble {
-                                NavigationLink(destination: BookshelfView()) {
-                                    Text("Why dost thou linger? Read thy books!")
-                                        .padding()
-                                        .background(Color.white.opacity(1.0))
-                                        .foregroundColor(Color("Accent3"))
-                                        .cornerRadius(10)
-                                        .offset(y: screenHeight * 0.04)
-                                        .font(.system(size: screenWidth * 0.030))
-                                        .zIndex(2)
+                            ZStack(alignment: .center) {
+                                Button(action: {
+                                    isAnimating = false // Set isAnimating to false when the button is tapped
+                                }) {
+                                    Image("King")
+                                        .resizable()
+                                        .scaledToFit()
+                                        .frame(width: screenWidth * 0.75)
+                                        .offset(y: imageOffset - screenHeight * 0.065)
+                                        .rotationEffect(.degrees(rotationAngle))
+                                        .zIndex(1)
+                                }
+                                
+                                if showSpeechBubble {
+                                    Button(action: {
+                                        isAnimating = false // Set isAnimating to false when the speech bubble button is tapped
+                                    }) {
+                                        Text("Why dost thou linger? Read thy books!")
+                                            .padding()
+                                            .background(Color.white.opacity(1.0))
+                                            .foregroundColor(Color("Accent3"))
+                                            .cornerRadius(10)
+                                            .offset(y: screenHeight * 0.06)
+                                            .font(.system(size: screenWidth * 0.030))
+                                            .zIndex(2)
+                                    }
                                 }
                             }
                         }
+        
                     }
                 }
             }
@@ -118,8 +126,8 @@ struct HomeView: View {
         
         // Delay the wiggle animation until the slide-in is complete
         DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
-            withAnimation(Animation.easeInOut(duration: 0.5).repeatForever(autoreverses: true)) {
-                rotationAngle = 10 // Add a small rotation for the wiggle effect
+            withAnimation(Animation.easeInOut(duration: 0.25).repeatForever(autoreverses: true)) {
+                rotationAngle = 5 // Add a small rotation for the wiggle effect
             }
             showSpeechBubble = true
         }
@@ -147,6 +155,7 @@ struct HomeView: View {
             remainingIdleTime -= 1
             if remainingIdleTime <= 0 {
                 timer.invalidate()
+                isAnimating = true
                 startAnimationCycle() // Start animation when idle time is up
             }
         }

@@ -9,6 +9,7 @@ struct LiveSessionView: View {
     var book: Book
     var onSessionSaved: (() -> Void)?
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.presentationMode) var presentationMode
     @State private var isRunning: Bool = false
     @State private var elapsedTime: TimeInterval = 0
     @State private var timer: Timer?
@@ -94,7 +95,9 @@ struct LiveSessionView: View {
 
             // Navigation link to save session
             Button(action: {
-                pauseTimer()
+                if(isRunning) {
+                    pauseTimer()
+                }
                 showSessionInput = false
                 isReadingSessionActive = true
             }) {
@@ -114,7 +117,7 @@ struct LiveSessionView: View {
                 duration: Int(elapsedTime),
                 onSessionAdded: { session in
                     isReadingSessionActive = false
-                    dismiss() // Dismiss LiveSessionView
+                    dismissToBooksView() // Dismiss LiveSessionView and ReadingSessionView
                     onSessionSaved?() // Trigger toast in BookView
                     endLiveActivity() // End live activity when session is saved
                 }
@@ -125,6 +128,15 @@ struct LiveSessionView: View {
             Task.detached {
                 await endLiveActivity() // End live activity when view disappears
             }
+        }
+    }
+
+    private func dismissToBooksView() {
+        // Dismiss the current view (ReadingSessionView)
+        presentationMode.wrappedValue.dismiss()
+        // Dismiss the previous view (LiveSessionView)
+        DispatchQueue.main.async {
+            presentationMode.wrappedValue.dismiss()
         }
     }
 
@@ -147,6 +159,8 @@ struct LiveSessionView: View {
         isRunning = false
         elapsedTime += Date().timeIntervalSince(sessionLastUpdated ?? Date())
         updateLiveActivity()
+        print("elapsedTimeDouble: \(elapsedTime)")
+        print("elapsedTimeInt: \(Int(elapsedTime))")
     }
 
     // Reverse 10 seconds
