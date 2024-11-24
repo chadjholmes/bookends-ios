@@ -21,9 +21,8 @@ struct ReadingSessionCard: View {
             }
         }
         .padding()
-        .background(Color(.systemGray6))
+        .background(Color(.clear))
         .cornerRadius(8)
-        .shadow(radius: 2)
     }
     
     // Function to format duration from seconds to "HH:mm:ss" or "mm:ss"

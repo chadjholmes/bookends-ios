@@ -8,7 +8,6 @@ import Dispatch
 struct LiveSessionView: View {
     var book: Book
     var onSessionSaved: (() -> Void)?
-    @Environment(\.dismiss) private var dismiss
     @Environment(\.presentationMode) var presentationMode
     @State private var isRunning: Bool = false
     @State private var elapsedTime: TimeInterval = 0
@@ -117,7 +116,6 @@ struct LiveSessionView: View {
                 duration: Int(elapsedTime),
                 onSessionAdded: { session in
                     isReadingSessionActive = false
-                    dismissToBooksView() // Dismiss LiveSessionView and ReadingSessionView
                     onSessionSaved?() // Trigger toast in BookView
                     endLiveActivity() // End live activity when session is saved
                 }
@@ -129,10 +127,6 @@ struct LiveSessionView: View {
                 await endLiveActivity() // End live activity when view disappears
             }
         }
-    }
-
-    private func dismissToBooksView() {
-       dismiss()
     }
 
     // Timer functions
