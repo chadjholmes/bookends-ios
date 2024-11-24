@@ -8,7 +8,7 @@ import Foundation
 import SwiftData
 
 @Model
-public class ReadingSession {
+public class ReadingSession: Identifiable {
     @Attribute(.unique) public var id: UUID
     @Relationship public var book: Book?
     public var startPage: Int

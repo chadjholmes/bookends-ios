@@ -21,25 +21,36 @@ struct ReadingSessionView: View {
     @State private var showingEndPicker = false
     
     var onSessionAdded: ((ReadingSession) -> Void)?
+    var existingSession: ReadingSession? // New optional property for existing session
     
-    // Updated initializer to accept an optional duration
-    init(book: Book, currentPage: Binding<Int>, duration: Int? = nil, onSessionAdded: ((ReadingSession) -> Void)? = nil) {
+    // Updated initializer to accept an optional ReadingSession
+    init(book: Book, currentPage: Binding<Int>, duration: Int? = nil, startPage: Int? = nil, endPage: Int? = nil, date: Date? = nil, onSessionAdded: ((ReadingSession) -> Void)? = nil, existingSession: ReadingSession? = nil) {
         self.book = book
         _currentPage = currentPage
-        _startPage = State(initialValue: currentPage.wrappedValue)
         self.onSessionAdded = onSessionAdded
         
-        // Initialize duration and input components
-        let totalDuration = duration ?? 30 // Default to 30 seconds if no duration is provided
-        self._duration = State(initialValue: totalDuration)
-        
-        // Calculate hours, minutes, and seconds from total duration
-        self._inputHours = State(initialValue: "\(totalDuration / 3600)")
-        self._inputMinutes = State(initialValue: "\((totalDuration % 3600) / 60)")
-        self._inputSeconds = State(initialValue: "\(totalDuration % 60)")
-        
-        // Initialize endPage to startPage
-        self._endPage = State(initialValue: currentPage.wrappedValue)
+        // Initialize state variables based on existing session or defaults
+        if let session = existingSession {
+            self._startPage = State(initialValue: session.startPage)
+            self._endPage = State(initialValue: session.endPage)
+            self._duration = State(initialValue: session.duration)
+            self._date = State(initialValue: session.date)
+            // Initialize input fields based on existing session duration
+            let totalDuration = session.duration
+            self._inputHours = State(initialValue: "\(totalDuration / 3600)")
+            self._inputMinutes = State(initialValue: "\((totalDuration % 3600) / 60)")
+            self._inputSeconds = State(initialValue: "\(totalDuration % 60)")
+            self.existingSession = existingSession
+        } else {
+            self._startPage = State(initialValue: startPage ?? currentPage.wrappedValue)
+            self._endPage = State(initialValue: endPage ?? currentPage.wrappedValue)
+            let totalDuration = duration ?? 30 // Default to 30 seconds if no duration is provided
+            self._duration = State(initialValue: totalDuration)
+            self._inputHours = State(initialValue: "\(totalDuration / 3600)")
+            self._inputMinutes = State(initialValue: "\((totalDuration % 3600) / 60)")
+            self._inputSeconds = State(initialValue: "\(totalDuration % 60)")
+            self._date = State(initialValue: date ?? Date())
+        }
     }
     
     var body: some View {
@@ -48,7 +59,32 @@ struct ReadingSessionView: View {
                 DatePicker("Date", selection: $date, displayedComponents: [.date])
                 // HStack for Start Page and End Page Picker
                 HStack() {
-                    Text("Start Page: \(startPage)")
+                    HStack() {
+                        Text("Start Page:")
+                        TextField("Page", text: Binding(
+                            get: { String(startPage) },
+                            set: { newValue in
+                                if let page = Int(newValue), page >= 0 {
+                                    startPage = page
+                                }
+                            }
+                        ))
+                        .keyboardType(.numberPad)
+                        .frame(width: 60)
+                        .padding(6)
+                        .background(Color(UIColor.systemGray6)) // Light grey that adapts to dark/light mode
+                        .cornerRadius(8)
+                        .toolbar {
+                            ToolbarItem(placement: .keyboard) {
+                                HStack {
+                                    Spacer()
+                                    Button("Done") {
+                                        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                                    }
+                                }
+                            }
+                        }
+                    }
                     Spacer()
                     HStack() {
                         Text("End Page:")
@@ -127,31 +163,40 @@ struct ReadingSessionView: View {
 
         // Calculate total duration in seconds
         let totalDurationFromInput = (hours * 3600) + (minutes * 60) + seconds
-
-        // Use the calculated total duration or the default duration
         let finalDuration = totalDurationFromInput > 0 ? totalDurationFromInput : duration
-
-        let session = ReadingSession(
-            book: book,
-            startPage: startPage,
-            endPage: endPage, // Use the selected endPage
-            duration: finalDuration, // Use the final duration
-            date: date
-        )
         
-        modelContext.insert(session)
+        if let existingSession = existingSession {
+            print("Updating existing session")
+            // Update existing session
+            existingSession.startPage = startPage
+            existingSession.endPage = endPage
+            existingSession.duration = finalDuration
+            existingSession.date = date
+        } else {
+            print("Creating new session")
+            // Create new session
+            let session = ReadingSession(
+                book: book,
+                startPage: startPage,
+                endPage: endPage,
+                duration: finalDuration,
+                date: date
+            )
+            modelContext.insert(session)
+        }
         
         // Update both the book and the binding
-        book.currentPage = endPage
-        currentPage = endPage
+        if endPage > book.currentPage {
+            book.currentPage = endPage
+            currentPage = endPage
+        }
         
         do {
             try modelContext.save()
-            print("Reading session saved successfully: \(session)") // Log success
-            onSessionAdded?(session) // Call the closure to notify about the new session
+            print("Reading session saved successfully")
             dismiss()
         } catch {
-            print("Failed to save reading session: \(error.localizedDescription)") // Log error
+            print("Failed to save reading session: \(error.localizedDescription)")
         }
     }
 }
