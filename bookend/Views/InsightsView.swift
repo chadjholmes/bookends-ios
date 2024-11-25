@@ -230,28 +230,24 @@ struct ReadingStreakCard: View {
     }
     
     private func calculateLongestStreak() -> Int {
-        let sortedSessions = sessions.sorted { $0.date < $1.date }
+        let sortedSessions = sessions.sorted { $0.date > $1.date }
         var longestStreak = 0
         var currentStreak = 0
-        var lastDate: Date?
+        var checkDate = Date()
         
         for session in sortedSessions {
-            if let last = lastDate {
-                let calendar = Calendar.current
-                if let daysBetween = calendar.dateComponents([.day], from: last, to: session.date).day {
-                    if daysBetween == 1 {
-                        currentStreak += 1
-                    } else if daysBetween == 0 {
-                        // Same day, continue
-                    } else {
-                        longestStreak = max(longestStreak, currentStreak)
-                        currentStreak = 1
-                    }
-                }
+            let calendar = Calendar.current
+            if calendar.isDate(session.date, inSameDayAs: checkDate) {
+                if currentStreak == 0 { currentStreak = 1 }
+            } else if let daysBetween = calendar.dateComponents([.day], from: session.date, to: checkDate).day,
+                      daysBetween == 1 {
+                currentStreak += 1
+                checkDate = session.date
             } else {
+                longestStreak = max(longestStreak, currentStreak)
                 currentStreak = 1
+                checkDate = session.date
             }
-            lastDate = session.date
         }
         
         return max(longestStreak, currentStreak)

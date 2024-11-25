@@ -29,17 +29,13 @@ struct BookMetadata: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Added on \(book.createdAt.formatted(date: .abbreviated, time: .omitted))")
-                .font(.caption)
-                .foregroundColor(.secondary)
-                .padding(.top)
         
             if let publisher = book.publisher {
                 Text("Publisher: \(publisher)")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
+                    .padding(.top)
             }
-        
             if let publishYear = book.publishYear {
                 Text("Published: \(String(publishYear))")
                     .font(.subheadline)
@@ -52,9 +48,13 @@ struct BookMetadata: View {
     
             if let isbn = book.isbn {
                 Text("ISBN: \(isbn)")
-                    .font(.caption)
+                    .font(.subheadline)
                     .foregroundColor(.secondary)
             }
+            Text("Added on: \(book.createdAt.formatted(date: .abbreviated, time: .omitted))")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                .padding(.top)
         }
     }
 } 

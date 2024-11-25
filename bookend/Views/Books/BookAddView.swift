@@ -9,7 +9,7 @@ struct BookAddView: View {
     @State private var title = ""
     @State private var author = ""
     @State private var totalPages = ""
-    @State private var showingSearch = false
+    @State private var showingSearch = true
     @State private var searchQuery = ""
     @State private var searchResults: [OpenLibraryBook] = []
     @State private var isSearching = false
@@ -26,14 +26,34 @@ struct BookAddView: View {
 
     var body: some View {
         NavigationView {
-            Form {
-                Section(header: Text("Search")) {
-                    Button("Search Books") {
-                        showingSearch = true
-                    }
+            BookSearchView(
+                searchQuery: $searchQuery,
+                searchResults: $searchResults,
+                isSearching: $isSearching,
+                onBookSelected: { book in
+                    handleBookSelection(book)
                 }
+            )
+            .toast(isPresenting: $showToast) {
+                ToastView(
+                    message: "Thy royal collection grows ever grander.",
+                    primaryButton: ToastButton(
+                        title: "Add More",
+                        action: {
+                            showToast = false
+                            showingSearch = true
+                        }
+                    ),
+                    secondaryButton: ToastButton(
+                        title: "Done",
+                        action: {
+                            showToast = false
+                            dismiss()
+                        }
+                    )
+                )
             }
-            .navigationTitle("Add Book")
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
             .navigationBarItems(
                 leading: Button("Cancel") {
                     dismiss()
@@ -43,31 +63,6 @@ struct BookAddView: View {
                 }
                 .disabled(newBook == nil || (title.isEmpty || author.isEmpty || totalPages.isEmpty))
             )
-            .overlay(
-                Group {
-                    if showToast {
-                        BookAddedToast(
-                            message: "Book Successfully Added",
-                            onDismiss: {
-                                showToast = false // Hide the toast
-                            },
-                            onReturnToBookshelf: {
-                                dismiss() // Navigate back to the bookshelf
-                            }
-                        )
-                    }
-                }
-            )
-            .sheet(isPresented: $showingSearch) {
-                BookSearchView(
-                    searchQuery: $searchQuery,
-                    searchResults: $searchResults,
-                    isSearching: $isSearching,
-                    onBookSelected: { book in
-                        handleBookSelection(book)
-                    }
-                )
-            }
             .sheet(item: $bookForEditing) { book in
                 BookEditView(book: book) { savedBook, success in
                     if success {
@@ -103,21 +98,54 @@ struct BookAddView: View {
             externalReference: ["openlibraryKey": book.key]
         )
         
-        if let coverUrl = book.coverImageUrl {
-            Task {
-                if let url = URL(string: coverUrl),
-                   let (data, _) = try? await URLSession.shared.data(from: url),
-                   let image = UIImage(data: data) {
-                    try? newBook?.saveCoverImage(image)
+        Task {
+            if let coverUrl = book.coverImageUrl {
+                do {
+                    guard let url = URL(string: coverUrl) else {
+                        print("Invalid cover URL: \(coverUrl)")
+                        return
+                    }
+                    
+                    let (data, response) = try await URLSession.shared.data(from: url)
+                    
+                    guard let httpResponse = response as? HTTPURLResponse,
+                          httpResponse.statusCode == 200 else {
+                        print("Invalid response for cover image")
+                        return
+                    }
+                    
+                    guard let image = UIImage(data: data) else {
+                        print("Failed to create image from data")
+                        return
+                    }
+                    
+                    // Ensure we're on the main thread when modifying the book
+                    await MainActor.run {
+                        do {
+                            try newBook?.saveCoverImage(image)
+                            print("Successfully saved cover image")
+                            // Only now show the edit view
+                            bookForEditing = newBook
+                            showingSearch = false
+                            showingEditBook = true
+                            searchQuery = ""
+                        } catch {
+                            print("Failed to save cover image: \(error)")
+                        }
+                    }
+                } catch {
+                    print("Error loading cover image: \(error)")
+                }
+            } else {
+                // If there's no cover image, proceed directly to edit
+                await MainActor.run {
+                    bookForEditing = newBook
+                    showingSearch = false
+                    showingEditBook = true
+                    searchQuery = ""
                 }
             }
         }
-        
-        // Set the selected book for editing
-        bookForEditing = newBook
-        showingSearch = false
-        showingEditBook = true
-        searchQuery = ""
     }
     
     private func saveBook() {

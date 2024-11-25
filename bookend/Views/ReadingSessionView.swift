@@ -20,11 +20,11 @@ struct ReadingSessionView: View {
     @State private var showingStartPicker = false
     @State private var showingEndPicker = false
     
-    var onSessionAdded: ((ReadingSession) -> Void)?
+    var onSessionAdded: (() -> Void)?
     var existingSession: ReadingSession? // New optional property for existing session
     
     // Updated initializer to accept an optional ReadingSession
-    init(book: Book, currentPage: Binding<Int>, duration: Int? = nil, startPage: Int? = nil, endPage: Int? = nil, date: Date? = nil, onSessionAdded: ((ReadingSession) -> Void)? = nil, existingSession: ReadingSession? = nil) {
+    init(book: Book, currentPage: Binding<Int>, duration: Int? = nil, startPage: Int? = nil, endPage: Int? = nil, date: Date? = nil, onSessionAdded: (() -> Void)? = nil, existingSession: ReadingSession? = nil) {
         self.book = book
         _currentPage = currentPage
         self.onSessionAdded = onSessionAdded
@@ -164,6 +164,14 @@ struct ReadingSessionView: View {
         // Calculate total duration in seconds
         let totalDurationFromInput = (hours * 3600) + (minutes * 60) + seconds
         let finalDuration = totalDurationFromInput > 0 ? totalDurationFromInput : duration
+
+        // Update both the book and the binding
+        if endPage > book.currentPage {
+            print("Updating book current page")
+            book.currentPage = endPage
+            currentPage = endPage
+            print("Book current page updated to \(book.currentPage)")
+        }
         
         if let existingSession = existingSession {
             print("Updating existing session")
@@ -185,16 +193,13 @@ struct ReadingSessionView: View {
             modelContext.insert(session)
         }
         
-        // Update both the book and the binding
-        if endPage > book.currentPage {
-            book.currentPage = endPage
-            currentPage = endPage
-        }
-        
         do {
+            onSessionAdded?()
             try modelContext.save()
             print("Reading session saved successfully")
-            dismiss()
+            DispatchQueue.main.async {
+                dismiss()
+            }
         } catch {
             print("Failed to save reading session: \(error.localizedDescription)")
         }

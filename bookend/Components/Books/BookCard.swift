@@ -21,4 +21,5 @@ struct BookCard: View {
             }
         }
     }
+        
 } 

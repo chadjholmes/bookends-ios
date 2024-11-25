@@ -5,11 +5,11 @@ struct ReadingSessionCard: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Session on \(session.date, formatter: dateFormatter)")
+            Text("\(session.date, formatter: dateFormatter)")
                 .font(.headline)
             
             HStack {
-                Text("Pages: \(session.startPage) - \(session.endPage)")
+                Text("\(session.startPage) - \(session.endPage)")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                 

@@ -18,7 +18,9 @@ struct LiveSessionView: View {
     @State private var liveActivity: Activity<ReadingSessionAttributes>?
     @State private var sessionStartDate: Date?
     @State private var sessionLastUpdated: Date?
-
+    @State private var showCompletionToast = false
+    @State private var lastSessionDuration = 0
+    @State private var pagesRead = 0
     @Query private var readingGoals: [ReadingGoal]
     @Query private var readingSessions: [ReadingSession]
     let semaphore = DispatchSemaphore(value: 0)
@@ -30,34 +32,25 @@ struct LiveSessionView: View {
                 Image(uiImage: coverImage)
                     .resizable()
                     .scaledToFit()
-                    .frame(height: 200)
+                    .frame(height: 300)
             } else {
                 Text("No Cover Image Available") // Fallback if no image is available
-                    .frame(height: 200)
+                    .frame(height: 300)
             }
 
             // 2. Stopwatch with pause/resume capability
             if isRunning {
                 Text(Date(timeIntervalSinceNow: -elapsedTime), style: .timer)
-                    .font(.largeTitle)
+                    .font(.system(size: UIScreen.main.bounds.width * 0.25))
                     .padding()
             } else {
                 Text(formatElapsedTime(elapsedTime))
-                    .font(.largeTitle)
+                    .font(.system(size: UIScreen.main.bounds.width * 0.25))
                     .padding()
             }
 
             HStack(spacing: 40) {
                 // Reverse 10 Seconds Button
-                Button(action: {
-                    reverseTenSeconds()
-                }) {
-                    Image(systemName: "gobackward.10") // Use system image for reverse
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 40, height: 40) // Adjust size as needed
-                        .foregroundStyle(Color("Accent1"))
-                }
 
                 // Play/Pause Button
                 Button(action: {
@@ -74,23 +67,8 @@ struct LiveSessionView: View {
                         .foregroundStyle(Color("Accent1"))
                 }
 
-                // Fast Forward 10 Seconds Button
-                Button(action: {
-                    fastForwardTenSeconds()
-                }) {
-                    Image(systemName: "goforward.10") // Use system image for fast forward
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 40, height: 40) // Adjust size as needed
-                        .foregroundStyle(Color("Accent1"))
-                }
             }
             .padding()
-
-            // 3. Start Page indicator
-            Text("Start Page: \(book.currentPage)") // Display current page from the Book model
-                .font(.headline)
-                .padding()
 
             // Navigation link to save session
             Button(action: {
@@ -100,24 +78,51 @@ struct LiveSessionView: View {
                 showSessionInput = false
                 isReadingSessionActive = true
             }) {
-                Text("Save Session")
-                    .bold()
-                    .padding()
-                    .background(Color("Accent1"))
-                    .cornerRadius(20)
-                    .foregroundColor(.white)
+                HStack {
+                    Spacer()
+                    Text("Save Session")
+                        .bold()
+                        .foregroundColor(.white)
+                    Spacer()
+                }
+                .padding()
+                .background(Color("Accent1"))
+                .cornerRadius(10)
             }
+            .padding(.horizontal, 32)  // Add horizontal padding from screen edges
             .padding(.top, 50)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color("Primary"))
+        .toast(isPresenting: $showCompletionToast) {
+            ToastView(
+                message: "Huzzah! Thy session hath been preserved.",
+                primaryButton: ToastButton(
+                    title: "New Session",
+                    action: {
+                        showCompletionToast = false
+                    }
+                ),
+                secondaryButton: ToastButton(
+                    title: "Done",
+                    action: {
+                        showCompletionToast = false
+                        presentationMode.wrappedValue.dismiss()
+                    }
+                )
+            )
         }
         .navigationDestination(isPresented: $isReadingSessionActive) {
             ReadingSessionView(
                 book: book,
                 currentPage: .constant(book.currentPage),
                 duration: Int(elapsedTime),
-                onSessionAdded: { session in
+                onSessionAdded: {
                     isReadingSessionActive = false
-                    onSessionSaved?() // Trigger toast in BookView
-                    endLiveActivity() // End live activity when session is saved
+                    lastSessionDuration = Int(elapsedTime)
+                    elapsedTime = 0
+                    showCompletionToast = true
+                    endLiveActivity()
                 }
             )
         }
@@ -291,6 +296,12 @@ struct LiveSessionView: View {
         } else {
             return String(format: "%d:%02d", minutes, seconds) // m:ss
         }
+    }
+
+    func formatMinutes(_ minutes: Int) -> String {
+        let hours = minutes / 60
+        let remainingMinutes = minutes % 60
+        return "\(hours) hours and \(remainingMinutes) minutes"
     }
 }
 

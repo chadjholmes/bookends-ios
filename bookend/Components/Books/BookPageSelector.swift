@@ -15,7 +15,14 @@ struct BookPageSelector: View {
                         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                     }
                 }) {
-                    Text("Current Page: \(currentPage) of \(totalPages)")
+                    HStack {
+                        Text("Current Page: ")
+                            .font(.headline)
+                            .foregroundColor(.gray)
+                        Text("\(currentPage) of \(totalPages)")
+                            .font(.headline)
+                            .foregroundColor(Color("Accent1"))
+                    }
                         .font(.headline)
                         .foregroundColor(Color("Accent1")) // Change text color to indicate it's tappable
                 }

@@ -51,15 +51,11 @@ struct BookView: View {
                     ),
                     totalPages: book.totalPages
                 )
+                .frame(maxWidth: UIScreen.main.bounds.width * 0.85)
                 HStack {
                     NavigationLink(destination: LiveSessionView(book: book)) {
                         HStack {
-                            Image(systemName: "record.circle")
-                                .resizable()
-                                .scaledToFit()
-                                .tint(.white)
-                                .frame(width: 20, height: 20)
-                            Text("Record Session")
+                            Text("Start Session")
                                 .font(.title2)
                         }
                         .frame(maxWidth: .infinity)
@@ -81,16 +77,14 @@ struct BookView: View {
                                 Image(systemName: "plus.circle")
                                     .resizable()
                                     .scaledToFit()
-                                    .tint(Color("Accent1"))
+                                    .foregroundColor(Color("Accent1"))
                                     .frame(width: 20, height: 20)
-                                Text("Add")
-                                    .font(.title3)
                             }
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color(.systemGray4))
-                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity, alignment: .leading) 
+                            .background(Color("Primary"))
+                            .foregroundColor(Color("Accent1"))
                             .cornerRadius(10)
+                            .padding()
                         }
                         .listRowBackground(Color.clear)
                         if !readingSessions.isEmpty {
@@ -134,8 +128,10 @@ struct BookView: View {
                 .frame(maxWidth: .infinity, minHeight: CGFloat(100 * (readingSessions.count + 1)))
             }
             .padding(.horizontal)
-            .toast(isPresented: $showToast, message: "Session saved successfully!")
         }
+        .scrollContentBackground(.hidden)
+        .background(Color("Primary"))
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -150,7 +146,7 @@ struct BookView: View {
             fetchReadingSessions()
         }) {
             NavigationView {
-                ReadingSessionView(book: book, currentPage: $currentPage, onSessionAdded: { newSession in
+                ReadingSessionView(book: book, currentPage: $currentPage, onSessionAdded: {
                     showingReadingSession = false  // Dismiss the sheet
                     showToast = true  // Show success toast if you have one
                 })
@@ -185,6 +181,7 @@ struct BookView: View {
             }
         }
         .onAppear {
+            reloadBook()
             loadCoverImage()
             fetchReadingSessions()
         }
@@ -207,6 +204,10 @@ struct BookView: View {
     }
     
     // MARK: - Data Fetching
+    
+    private func reloadBook() {
+        currentPage = book.currentPage
+    }
     
     private func fetchReadingSessions() {
         do {
