@@ -2,7 +2,7 @@ import SwiftUI
 
 struct BookPageSelector: View {
     @Binding var currentPage: Int
-    @Binding var totalPages: Int
+    var totalPages: Int
     @State private var showingCurrentPagePicker = false
 
     var body: some View {
@@ -15,7 +15,14 @@ struct BookPageSelector: View {
                         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                     }
                 }) {
-                    Text("Current Page: \(currentPage) of \(totalPages)")
+                    HStack {
+                        Text("Current Page: ")
+                            .font(.headline)
+                            .foregroundColor(.gray)
+                        Text("\(currentPage) of \(totalPages)")
+                            .font(.headline)
+                            .foregroundColor(Color("Accent1"))
+                    }
                         .font(.headline)
                         .foregroundColor(Color("Accent1")) // Change text color to indicate it's tappable
                 }
@@ -23,7 +30,7 @@ struct BookPageSelector: View {
                 Spacer()
             }
             .padding(.bottom, 8)
-            .background(Color(.systemGray6)) // Background for the button
+            .background(Color(.clear)) // Background for the button
             .cornerRadius(8) // Rounded corners for the button background
 
             // Slider for Page Selection
@@ -46,7 +53,7 @@ struct BookPageSelector: View {
                         .foregroundColor(.gray) // Change text color to indicate no pages
                 }
                 .padding(.top, 8)
-                .background(Color(.systemGray6))
+                .background(Color(.clear))
                 .cornerRadius(8)
             }
 
@@ -79,12 +86,11 @@ struct BookPageSelector: View {
                         .padding(.leading, 4)
                 }
                 .padding(.top, 8)
-                .background(Color(.systemGray6))
+                .background(Color(.clear))
                 .cornerRadius(8)
             }
         }
-        .padding() // Add padding around the VStack
-        .background(Color(.systemGray6)) // Background for the entire selector
+        .background(Color(.clear)) // Background for the entire selector
         .cornerRadius(8) // Rounded corners for the entire selector
         .onTapGesture {
             // Dismiss the keyboard and close the TextField if tapped outside

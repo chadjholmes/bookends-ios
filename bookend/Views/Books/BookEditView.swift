@@ -23,13 +23,6 @@ struct BookEditView: View {
             ScrollView {
                 VStack {
                     CoverImageSection(viewModel: viewModel, showEditionsView: $showEditionsView)
-                    BookPageSelector(currentPage: Binding(
-                        get: { Int(viewModel.currentPage) ?? 0 },
-                        set: { viewModel.currentPage = String($0) }
-                    ), totalPages: Binding(
-                        get: { Int(viewModel.totalPages) ?? 0 },
-                        set: { viewModel.totalPages = String($0) }
-                    ))
                     GroupsSection(allGroups: allGroups.sorted(by: { $0.name < $1.name }),
                                   isBookInGroup: isBookInGroup,
                                   toggleGroup: toggleGroup)

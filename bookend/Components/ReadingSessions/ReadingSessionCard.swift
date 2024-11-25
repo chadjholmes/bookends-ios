@@ -5,11 +5,11 @@ struct ReadingSessionCard: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Session on \(session.date, formatter: dateFormatter)")
+            Text("\(session.date, formatter: dateFormatter)")
                 .font(.headline)
             
             HStack {
-                Text("Pages: \(session.startPage) - \(session.endPage)")
+                Text("\(session.startPage) - \(session.endPage)")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                 
@@ -21,9 +21,8 @@ struct ReadingSessionCard: View {
             }
         }
         .padding()
-        .background(Color(.systemGray6))
+        .background(Color(.clear))
         .cornerRadius(8)
-        .shadow(radius: 2)
     }
     
     // Function to format duration from seconds to "HH:mm:ss" or "mm:ss"

@@ -6,13 +6,15 @@ struct BookDetails: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(book.title)
-                .font(.title)
+                .lineLimit(2)
+                .font(.title2)
                 .bold()
                 .foregroundColor(Color("Accent1"))
+                .fixedSize(horizontal: false, vertical: true)
             
             if !book.author.isEmpty {
                 Text("by \(book.author)")
-                    .font(.title2)
+                    .font(.title3)
                     .foregroundColor(.secondary)
             }
             
@@ -27,17 +29,13 @@ struct BookMetadata: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Added on \(book.createdAt.formatted(date: .abbreviated, time: .omitted))")
-                .font(.caption)
-                .foregroundColor(.secondary)
-                .padding(.top)
         
             if let publisher = book.publisher {
                 Text("Publisher: \(publisher)")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
+                    .padding(.top)
             }
-        
             if let publishYear = book.publishYear {
                 Text("Published: \(String(publishYear))")
                     .font(.subheadline)
@@ -50,9 +48,13 @@ struct BookMetadata: View {
     
             if let isbn = book.isbn {
                 Text("ISBN: \(isbn)")
-                    .font(.caption)
+                    .font(.subheadline)
                     .foregroundColor(.secondary)
             }
+            Text("Added on: \(book.createdAt.formatted(date: .abbreviated, time: .omitted))")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                .padding(.top)
         }
     }
 } 
