@@ -33,6 +33,7 @@ struct LiveSessionView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(height: 300)
+                    .cornerRadius(10)
             } else {
                 Text("No Cover Image Available") // Fallback if no image is available
                     .frame(height: 300)
@@ -236,6 +237,7 @@ struct LiveSessionView: View {
         )
     
         let existingProgress = dailyGoal?.calculateProgress(from: readingSessions, on: sessionStartDate ?? Date()) ?? 0.0
+        print("existing progress: \(existingProgress)")
         let progress = min(existingProgress + (elapsedTime / dailyGoalTarget), 1.0)
         
         let initialState = ReadingSessionAttributes.ContentState(

@@ -19,6 +19,7 @@ struct ReadingSessionView: View {
 
     @State private var showingStartPicker = false
     @State private var showingEndPicker = false
+    @State private var showPercentage: Bool
     
     var onSessionAdded: (() -> Void)?
     var existingSession: ReadingSession? // New optional property for existing session
@@ -28,6 +29,8 @@ struct ReadingSessionView: View {
         self.book = book
         _currentPage = currentPage
         self.onSessionAdded = onSessionAdded
+        // Initialize showPercentage based on book's preference
+        self._showPercentage = State(initialValue: book.showPercentage) // Assuming book has this property
         
         // Initialize state variables based on existing session or defaults
         if let session = existingSession {
@@ -57,61 +60,84 @@ struct ReadingSessionView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 30) {
                 DatePicker("Date", selection: $date, displayedComponents: [.date])
-                // HStack for Start Page and End Page Picker
-                HStack() {
-                    HStack() {
-                        Text("Start Page:")
-                        TextField("Page", text: Binding(
-                            get: { String(startPage) },
-                            set: { newValue in
-                                if let page = Int(newValue), page >= 0 {
-                                    startPage = page
-                                }
-                            }
-                        ))
-                        .keyboardType(.numberPad)
-                        .frame(width: 60)
-                        .padding(6)
-                        .background(Color(UIColor.systemGray6)) // Light grey that adapts to dark/light mode
-                        .cornerRadius(8)
-                        .toolbar {
-                            ToolbarItem(placement: .keyboard) {
-                                HStack {
-                                    Spacer()
-                                    Button("Done") {
-                                        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                
+                // Update the page input section
+                VStack(spacing: 12) {
+                    HStack {
+                        HStack {
+                            Text("Start:")
+                            TextField(showPercentage ? "%" : "Page", text: Binding(
+                                get: { 
+                                    showPercentage ? pageToPercentage(startPage) : String(startPage)
+                                },
+                                set: { newValue in
+                                    if showPercentage {
+                                        if let page = percentageToPage(newValue) {
+                                            startPage = page
+                                        }
+                                    } else if let page = Int(newValue), page >= 0 {
+                                        startPage = page
                                     }
                                 }
-                            }
+                            ))
+                            .keyboardType(.decimalPad)
+                            .frame(width: showPercentage ? 70 : 60)
+                            .padding(6)
+                            .background(Color(UIColor.systemGray6))
+                            .cornerRadius(8)
                         }
-                    }
-                    Spacer()
-                    HStack() {
-                        Text("End Page:")
-                        TextField("Page", text: Binding(
-                            get: { String(endPage) },
-                            set: { newValue in
-                                if let page = Int(newValue), page >= startPage, page <= book.totalPages {
-                                    endPage = page
-                                }
-                            }
-                        ))
-                        .keyboardType(.numberPad)
-                        .frame(width: 60)
-                        .padding(6)
-                        .background(Color(UIColor.systemGray6)) // Light grey that adapts to dark/light mode
-                        .cornerRadius(8)
-                        .toolbar {
-                            ToolbarItem(placement: .keyboard) {
-                                HStack {
-                                    Spacer()
-                                    Button("Done") {
-                                        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                        
+                        Spacer()
+                        
+                        HStack {
+                            Text("End:")
+                            TextField(showPercentage ? "%" : "Page", text: Binding(
+                                get: { 
+                                    showPercentage ? pageToPercentage(endPage) : String(endPage)
+                                },
+                                set: { newValue in
+                                    if showPercentage {
+                                        if let page = percentageToPage(newValue) {
+                                            endPage = min(page, book.totalPages)
+                                        }
+                                    } else if let page = Int(newValue), page >= startPage, page <= book.totalPages {
+                                        endPage = page
                                     }
                                 }
-                            }
+                            ))
+                            .keyboardType(.decimalPad)
+                            .frame(width: showPercentage ? 70 : 60)
+                            .padding(6)
+                            .background(Color(UIColor.systemGray6))
+                            .cornerRadius(8)
                         }
                     }
+                    
+                    // Move the toggle control here
+                    HStack(spacing: 0) {
+                        Button(action: { showPercentage = false }) {
+                            Image(systemName: "number")
+                                .foregroundColor(!showPercentage ? .white : Color("Accent1"))
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .background(!showPercentage ? Color("Accent1") : .clear)
+                        }
+                        
+                        Button(action: { showPercentage = true }) {
+                            Image(systemName: "percent")
+                                .foregroundColor(showPercentage ? .white : Color("Accent1"))
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .background(showPercentage ? Color("Accent1") : .clear)
+                        }
+                    }
+                    .background(
+                        Capsule()
+                            .stroke(Color("Accent1"), lineWidth: 1)
+                    )
+                    .clipShape(Capsule())
+                    .buttonStyle(PlainButtonStyle())
+                    .frame(maxWidth: .infinity, alignment: .center)
                 }
 
                 // Duration Input Section using MultiPicker
@@ -165,19 +191,23 @@ struct ReadingSessionView: View {
         let totalDurationFromInput = (hours * 3600) + (minutes * 60) + seconds
         let finalDuration = totalDurationFromInput > 0 ? totalDurationFromInput : duration
 
+        // Ensure we're using page numbers, not percentages
+        let finalStartPage = showPercentage ? (percentageToPage(pageToPercentage(startPage)) ?? startPage) : startPage
+        let finalEndPage = showPercentage ? (percentageToPage(pageToPercentage(endPage)) ?? endPage) : endPage
+
         // Update both the book and the binding
-        if endPage > book.currentPage {
+        if finalEndPage > book.currentPage {
             print("Updating book current page")
-            book.currentPage = endPage
-            currentPage = endPage
+            book.currentPage = finalEndPage
+            currentPage = finalEndPage
             print("Book current page updated to \(book.currentPage)")
         }
         
         if let existingSession = existingSession {
             print("Updating existing session")
             // Update existing session
-            existingSession.startPage = startPage
-            existingSession.endPage = endPage
+            existingSession.startPage = finalStartPage
+            existingSession.endPage = finalEndPage
             existingSession.duration = finalDuration
             existingSession.date = date
         } else {
@@ -185,8 +215,8 @@ struct ReadingSessionView: View {
             // Create new session
             let session = ReadingSession(
                 book: book,
-                startPage: startPage,
-                endPage: endPage,
+                startPage: finalStartPage,
+                endPage: finalEndPage,
                 duration: finalDuration,
                 date: date
             )
@@ -203,6 +233,16 @@ struct ReadingSessionView: View {
         } catch {
             print("Failed to save reading session: \(error.localizedDescription)")
         }
+    }
+    
+    private func pageToPercentage(_ page: Int) -> String {
+        let percentage = Double(page) / Double(book.totalPages) * 100
+        return String(format: "%.1f", percentage)
+    }
+    
+    private func percentageToPage(_ percentage: String) -> Int? {
+        guard let value = Double(percentage) else { return nil }
+        return Int((value / 100) * Double(book.totalPages))
     }
 }
 

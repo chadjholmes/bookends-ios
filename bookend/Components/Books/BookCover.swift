@@ -30,14 +30,23 @@ struct BookCover: View {
                     .cornerRadius(8)
                     .shadow(radius: 4)
                     .overlay(
-                        ProgressRing(
-                            progress: Double(progressPercentage),
-                            color: Color("Accent1"),
-                            lineWidth: 4,
-                            size: 32
-                        )
-                        .foregroundColor(Color("Accent1"))
-                        .padding(4),
+                        Group {
+                            if book.isCompleted {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundColor(Color("Accent1"))
+                                    .font(.system(size: 32))
+                                    .padding(4)
+                            } else {
+                                ProgressRing(
+                                    progress: Double(progressPercentage),
+                                    color: Color("Accent1"),
+                                    lineWidth: 4,
+                                    size: 32
+                                )
+                                .foregroundColor(Color("Accent1"))
+                                .padding(4)
+                            }
+                        },
                         alignment: .bottomTrailing
                     )
             } else {
@@ -49,14 +58,23 @@ struct BookCover: View {
                     .background(Color.secondary.opacity(0.2))
                     .cornerRadius(8)
                     .overlay(
-                        ProgressRing(
-                            progress: Double(progressPercentage),
-                            color: Color("Accent1"),
-                            lineWidth: 4,
-                            size: 32
-                        )
-                        .foregroundColor(Color("Accent1"))
-                        .padding(4),
+                        Group {
+                            if book.isCompleted {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundColor(Color("Accent1"))
+                                    .font(.system(size: 32))
+                                    .padding(4)
+                            } else {
+                                ProgressRing(
+                                    progress: Double(progressPercentage),
+                                    color: Color("Accent1"),
+                                    lineWidth: 4,
+                                    size: 32
+                                )
+                                .foregroundColor(Color("Accent1"))
+                                .padding(4)
+                            }
+                        },
                         alignment: .bottomTrailing
                     )
             }

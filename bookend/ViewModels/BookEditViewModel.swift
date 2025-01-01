@@ -142,4 +142,15 @@ class BookEditViewModel: ObservableObject {
         // Load cover image if available
         loadCoverImage()
     }
+
+    func prepareForSave(usePercentage: Bool) {
+        if usePercentage {
+            // Convert percentage to page number
+            if let totalPages = Int(totalPages),
+               let percentage = Double(currentPage) {
+                let page = Int((percentage / 100.0) * Double(totalPages))
+                currentPage = String(page)
+            }
+        }
+    }
 }

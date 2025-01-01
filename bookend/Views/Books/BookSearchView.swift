@@ -16,24 +16,24 @@ struct BookSearchView: View {
                     HStack {
                         AsyncImage(url: URL(string: book.coverImageUrl ?? "")) { phase in
                             switch phase {
-                            case .empty:
-                                ProgressView()
-                                    .frame(width: 50, height: 75)
-                            case .success(let image):
-                                image
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fit)
-                                    .frame(width: 50, height: 75)
-                                    .cornerRadius(4)
-                                    .shadow(radius: 2)
-                            case .failure:
-                                Image(systemName: "book")
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fit)
-                                    .frame(width: 50, height: 75)
-                                    .foregroundColor(.gray)
-                            @unknown default:
-                                EmptyView()
+                                case .empty:
+                                    ProgressView()
+                                        .frame(width: 50, height: 75)
+                                case .success(let image):
+                                    image
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                        .frame(width: 50, height: 75)
+                                        .cornerRadius(4)
+                                        .shadow(radius: 2)
+                                case .failure:
+                                    Image(systemName: "book")
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                        .frame(width: 50, height: 75)
+                                        .foregroundColor(.gray)
+                                @unknown default:
+                                    EmptyView()
                             }
                         }
                         
@@ -62,6 +62,14 @@ struct BookSearchView: View {
                     }
                 }
             )
+            .onAppear {
+                print("BookSearchView appeared")
+                print("searchQuery: \(searchQuery)")
+                print("searchResults: \(searchResults)")
+            }
+            .onChange(of: searchResults) { newValue in
+                print("searchResults changed to: \(newValue)")
+            }
         }
     }
     
