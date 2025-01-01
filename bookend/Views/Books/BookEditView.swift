@@ -11,6 +11,7 @@ struct BookEditView: View {
     @Query private var existingBooks: [Book]
     var book: Book
     var onSave: (Book, Bool) -> Void // Closure for save handling
+    @State private var usePercentage = false
 
     init(book: Book, onSave: @escaping (Book, Bool) -> Void) {
         self.book = book
@@ -26,7 +27,7 @@ struct BookEditView: View {
                     GroupsSection(allGroups: allGroups.sorted(by: { $0.name < $1.name }),
                                   isBookInGroup: isBookInGroup,
                                   toggleGroup: toggleGroup)
-                    BookDetailsSection(viewModel: viewModel)
+                    BookDetailsSection(viewModel: viewModel, usePercentage: $usePercentage)
                 }
                 .padding()
             }
@@ -97,19 +98,22 @@ struct BookEditView: View {
     }
 
     private func saveBook() {
+        // Convert percentage to page number if needed
+        viewModel.prepareForSave(usePercentage: usePercentage)
+
         if isBookDuplicate(title: viewModel.title, isbn: viewModel.isbn) {
             viewModel.alertMessage = "A book with the same title or ISBN already exists"
             viewModel.showAlert = true
-            onSave(book, false) // Indicate failure due to duplicate
+            onSave(book, false)
             return
         }
 
         if let book = viewModel.book {
-            // Update the existing book
+            // Update existing book
             book.title = viewModel.title
             book.author = viewModel.author
             book.totalPages = Int(viewModel.totalPages) ?? 0
-            book.currentPage = Int(viewModel.currentPage) ?? 0
+            book.currentPage = Int(viewModel.currentPage) ?? 0  // Now using converted value
             book.isbn = viewModel.isbn
             book.publisher = viewModel.publisher
             book.publishYear = Int(viewModel.publishYear) ?? nil
@@ -120,7 +124,7 @@ struct BookEditView: View {
             print("Updating book: \(book.title)")
             onSave(book, true) // Indicate success
         } else {
-            // Create a new book
+            // Create new book with modified current page calculation
             let newBook = Book(
                 title: viewModel.title,
                 author: viewModel.author,
@@ -130,9 +134,8 @@ struct BookEditView: View {
                 isbn: viewModel.isbn, 
                 publisher: viewModel.publisher,
                 publishYear: Int(viewModel.publishYear) ?? nil,
-                currentPage: Int(viewModel.currentPage) ?? 0,
+                currentPage: Int(viewModel.currentPage) ?? 0,  // Use calculated page
                 externalReference: [:]
-               
             )
             print("Creating new book: \(newBook.title)")
             onSave(newBook, true) // Indicate success

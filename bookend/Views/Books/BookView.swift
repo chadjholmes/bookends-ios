@@ -27,19 +27,38 @@ struct BookView: View {
     
     var body: some View {
         ScrollView {
-            VStack(spacing: 40) {
+            VStack(spacing: 30) {
                 HStack {
                     if let coverImage = coverUIImage {
                         Image(uiImage: coverImage)
                             .resizable()
                             .scaledToFit()
                             .frame(width: 180, height: 270)
+                            .cornerRadius(8)
                     } else {
                         ProgressView()
                             .frame(width: 180, height: 270)
                     }
-                    BookDetails(book: book)
+                    VStack {
+                        BookDetails(book: book)
+                    }
                 }
+                
+                Toggle(isOn: Binding(
+                    get: { book.isCompleted },
+                    set: { newValue in
+                        book.isCompleted = newValue
+                        try? modelContext.save()
+                    }
+                )) {
+                    Text(book.isCompleted ? "Completed" : "Mark as Complete")
+                        .foregroundColor(.gray)
+                        .font(.headline)
+                }
+                .toggleStyle(SwitchToggleStyle(tint: Color("Accent1")))
+                .frame(maxWidth: UIScreen.main.bounds.width * 0.85)
+                
+
                 BookPageSelector(
                     currentPage: Binding(
                         get: { currentPage },
@@ -128,6 +147,7 @@ struct BookView: View {
                 .frame(maxWidth: .infinity, minHeight: CGFloat(100 * (readingSessions.count + 1)))
             }
             .padding(.horizontal)
+            .padding(.top, 20)
         }
         .scrollContentBackground(.hidden)
         .background(Color("Primary"))
@@ -161,6 +181,7 @@ struct BookView: View {
                             modelContext.insert(savedBook)
                             try modelContext.save()
                             print("Successfully saved book: \(savedBook.title)")
+                            reloadBook()
                             isEditing = false
                         } catch {
                             print("Failed to save book: \(error.localizedDescription)")

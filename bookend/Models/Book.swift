@@ -22,6 +22,8 @@ public final class Book {
     public var isbn: String?               // Ensure this property is included
     public var publisher: String?
     public var publishYear: Int?
+    public var showPercentage: Bool = false
+    public var isCompleted: Bool = false
     
     // External references to maintain OpenLibrary identifiers
     public var externalReference: [String: String]  // Ensure this property is included
@@ -43,7 +45,9 @@ public final class Book {
                 publishYear: Int? = nil,
                 currentPage: Int = 0,
                 createdAt: Date = Date(),
-                externalReference: [String: String]) {
+                externalReference: [String: String],
+                showPercentage: Bool = false,
+                isCompleted: Bool = false) {
         self.id = id
         self.title = title
         self.author = author
@@ -58,6 +62,8 @@ public final class Book {
         self.externalReference = externalReference
         self.coverImageData = nil
         self.coverImageURL = nil
+        self.showPercentage = showPercentage
+        self.isCompleted = isCompleted
     }
     
     /// Loads the cover image from stored data or URL.

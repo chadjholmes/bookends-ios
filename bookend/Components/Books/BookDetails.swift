@@ -54,7 +54,6 @@ struct BookMetadata: View {
             Text("Added on: \(book.createdAt.formatted(date: .abbreviated, time: .omitted))")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
-                .padding(.top)
         }
     }
 } 
